@@ -64,6 +64,13 @@ body {
     flex-direction: column;
 }
 
+.window.maximized {
+    top: 0 !important;
+    left: 0 !important;
+    width: 100vw !important;
+    height: calc(100vh - 38px) !important;
+}
+
 .titlebar {
     background: linear-gradient(90deg, #000080, #1084d0);
     color: white;
@@ -135,6 +142,7 @@ body {
     font-family: monospace;
     position: relative;
     overflow: hidden;
+    outline: none;
 }
 
 /* Taskbar */
@@ -291,7 +299,6 @@ body {
 
 <div id="desktop">
 
-    <!-- Desktop Icons -->
     <div class="icon" style="position:absolute;left:20px;top:20px;" ondblclick="openWindow('myComputer', 'My Computer', '📁')">
         <span>📁</span>
         <div>My Computer</div>
@@ -312,13 +319,28 @@ body {
         <div>Calculator</div>
     </div>
 
-    <!-- Default Welcome Window -->
+    <div class="icon" style="position:absolute;left:20px;top:380px;" ondblclick="openWindow('paint', 'Paint Brush', '🎨')">
+        <span>🎨</span>
+        <div>Paint</div>
+    </div>
+
+    <div class="icon" style="position:absolute;left:20px;top:470px;" ondblclick="openWindow('controlPanel', 'Control Panel', '⚙️')">
+        <span>⚙️</span>
+        <div>Control Panel</div>
+    </div>
+
+    <div class="icon" style="position:absolute;left:20px;top:560px;" ondblclick="openWindow('recycle', 'Recycle Bin', '🗑️')">
+        <span>🗑️</span>
+        <div>Recycle Bin</div>
+    </div>
+
     <div class="window" id="window-welcome" style="left:220px;top:80px; z-index: 1;" onmousedown="focusWindow('window-welcome')">
         <div class="titlebar">
             <span>📁 Welcome</span>
             <div class="buttons">
-                <button onclick="minimizeWindow('window-welcome')">_</button>
-                <button onclick="closeWindow('window-welcome')">X</button>
+                <button onclick="event.stopPropagation(); minimizeWindow('window-welcome')">_</button>
+                <button onclick="event.stopPropagation(); maximizeWindow('window-welcome')">🗖</button>
+                <button onclick="event.stopPropagation(); closeWindow('window-welcome')">X</button>
             </div>
         </div>
         <div class="content">
@@ -326,26 +348,26 @@ body {
             <p>Welcome to <b>SHNAIL-OS</b>!</p>
             <br>
             <ul>
-                <li>This OS recreation has games, notes and other stuff.</li>
+                <li>This OS recreation has games, notes, paint, settings and more!</li>
                 <li><b>#SHNAILS4LIFE</b></li>
             </ul>
         </div>
     </div>
 
-    <!-- Start Menu -->
     <div id="startMenu">
         <div class="start-sidebar"><b>SHNAIL</b>OS</div>
         <ul>
             <li onclick="openWindow('myComputer', 'My Computer', '📁'); toggleStartMenu()">📁 My Computer</li>
             <li onclick="openWindow('gamesFolder', 'Games Arcade', '🎮'); toggleStartMenu()">🎮 Games</li>
             <li onclick="openWindow('notepad', 'Notepad', '📝'); toggleStartMenu()">📝 Notepad</li>
+            <li onclick="openWindow('paint', 'Paint Brush', '🎨'); toggleStartMenu()">🎨 Paint</li>
             <li onclick="openWindow('calc', 'Calculator', '🧮'); toggleStartMenu()">🧮 Calculator</li>
+            <li onclick="openWindow('controlPanel', 'Control Panel', '⚙️'); toggleStartMenu()">⚙️ Control Panel</li>
             <li><hr></li>
             <li onclick="alert('Shutting down is not supported in this browser version!'); toggleStartMenu()">❌ Shut Down...</li>
         </ul>
     </div>
 
-    <!-- Taskbar -->
     <div id="taskbar">
         <button id="start" onclick="toggleStartMenu()">
             <span>🐌</span> Start
@@ -411,6 +433,7 @@ function makeDraggable(win) {
     let dragging = false, offsetX = 0, offsetY = 0;
 
     bar.onmousedown = e => {
+        if (win.classList.contains('maximized')) return;
         focusWindow(win.id);
         dragging = true;
         offsetX = e.clientX - win.offsetLeft;
@@ -435,7 +458,6 @@ document.querySelectorAll('.window').forEach(win => {
 });
 
 function closeWindow(winId) {
-    // Clean up game loops if active
     if (window.gameIntervals && window.gameIntervals[winId]) {
         clearInterval(window.gameIntervals[winId]);
         delete window.gameIntervals[winId];
@@ -451,6 +473,14 @@ function minimizeWindow(winId) {
     if (win) win.style.display = "none";
     const taskItem = document.getElementById(`task-${winId}`);
     if (taskItem) taskItem.classList.remove('active');
+}
+
+function maximizeWindow(winId) {
+    const win = document.getElementById(winId);
+    if (win) {
+        win.classList.toggle('maximized');
+        focusWindow(winId);
+    }
 }
 
 function toggleWindow(winId) {
@@ -489,6 +519,35 @@ function openWindow(idPrefix, title, icon) {
         contentHTML = `<textarea style="width:100%; height:100%; border:none; resize:none; outline:none; font-family:Tahoma; font-size:13px;" placeholder="Type something here..."></textarea>`;
     } else if (idPrefix === 'myComputer') {
         contentHTML = `<div style="display:flex; gap:15px;"><div style="text-align:center;">💾<div style="font-size:11px;">3½ Floppy (A:)</div></div><div style="text-align:center;">💽<div style="font-size:11px;">Local Disk (C:)</div></div></div>`;
+    } else if (idPrefix === 'recycle') {
+        contentHTML = `<div style="text-align:center; padding-top:20px; color:#666;">Trash folder is empty.</div>`;
+    } else if (idPrefix === 'controlPanel') {
+        contentHTML = `
+            <div style="display:flex; flex-direction:column; gap:10px;">
+                <b>Desktop Background Color:</b>
+                <div style="display:flex; gap:8px;">
+                    <button style="width:30px; height:30px; background:#008080; cursor:pointer;" onclick="document.body.style.background='#008080'"></button>
+                    <button style="width:30px; height:30px; background:#4a0e4e; cursor:pointer;" onclick="document.body.style.background='#4a0e4e'"></button>
+                    <button style="width:30px; height:30px; background:#000000; cursor:pointer;" onclick="document.body.style.background='#000000'"></button>
+                    <button style="width:30px; height:30px; background:#2c3e50; cursor:pointer;" onclick="document.body.style.background='#2c3e50'"></button>
+                </div>
+            </div>
+        `;
+    } else if (idPrefix === 'paint') {
+        contentHTML = `
+            <div style="display:flex; flex-direction:column; height:100%; gap:4px;">
+                <div style="display:flex; gap:6px; align-items:center; background:#c0c0c0; padding:2px;">
+                    <label style="font-size:11px;">Color:</label>
+                    <input type="color" id="paint-color-${winId}" value="#000000">
+                    <label style="font-size:11px;">Size:</label>
+                    <input type="range" id="paint-size-${winId}" min="1" max="20" value="3" style="width:60px;">
+                    <button onclick="clearCanvas('${winId}')" style="font-size:11px; padding:2px 4px; cursor:pointer;">Clear</button>
+                </div>
+                <div style="flex-grow:1; position:relative; width:100%; height:100%;">
+                    <canvas id="paint-canvas-${winId}" style="background:white; border:1px solid #808080; cursor:crosshair; width:100%; height:100%; display:block;"></canvas>
+                </div>
+            </div>
+        `;
     } else if (idPrefix === 'gamesFolder') {
         contentHTML = `
             <div style="display:flex; gap:20px; padding:10px;">
@@ -504,10 +563,10 @@ function openWindow(idPrefix, title, icon) {
         `;
     } else if (idPrefix === 'snake') {
         contentHTML = `
-            <div class="game-container" id="snake-box-${winId}" tabindex="0">
+            <div class="game-container" id="snake-box-${winId}" tabindex="0" onclick="this.focus()">
                 <div style="margin-bottom:5px; font-size:12px;">Score: <span id="snake-score-${winId}">0</span></div>
                 <canvas id="snake-canvas-${winId}" width="240" height="200" style="border:2px solid #0f0; background:#000;"></canvas>
-                <div style="margin-top:5px; font-size:10px; color:#aaa;">Use Arrow Keys to Play</div>
+                <div style="margin-top:5px; font-size:10px; color:#aaa;">Click here & use Arrow Keys</div>
             </div>
         `;
     } else if (idPrefix === 'tictactoe') {
@@ -536,7 +595,7 @@ function openWindow(idPrefix, title, icon) {
                     <button onclick="calcAppend('${winId}', '7')" style="font-weight:bold; cursor:pointer;">7</button>
                     <button onclick="calcAppend('${winId}', '8')" style="font-weight:bold; cursor:pointer;">8</button>
                     <button onclick="calcAppend('${winId}', '9')" style="font-weight:bold; cursor:pointer;">9</button>
-                    <button onclick="calcAppend('${winId}, '/')" style="font-weight:bold; cursor:pointer;" onclick="calcOp('${winId}', '/')">/</button>
+                    <button onclick="calcOp('${winId}', '/')" style="font-weight:bold; cursor:pointer;">/</button>
                     <button onclick="calcAppend('${winId}', '4')" style="font-weight:bold; cursor:pointer;">4</button>
                     <button onclick="calcAppend('${winId}', '5')" style="font-weight:bold; cursor:pointer;">5</button>
                     <button onclick="calcAppend('${winId}', '6')" style="font-weight:bold; cursor:pointer;">6</button>
@@ -563,8 +622,9 @@ function openWindow(idPrefix, title, icon) {
         <div class="titlebar">
             <span>${icon} ${title}</span>
             <div class="buttons">
-                <button onclick="minimizeWindow('${winId}')">_</button>
-                <button onclick="closeWindow('${winId}')">X</button>
+                <button onclick="event.stopPropagation(); minimizeWindow('${winId}')">_</button>
+                <button onclick="event.stopPropagation(); maximizeWindow('${winId}')">🗖</button>
+                <button onclick="event.stopPropagation(); closeWindow('${winId}')">X</button>
             </div>
         </div>
         <div class="content" style="${idPrefix === 'snake' ? 'padding:0; overflow:hidden;' : ''}">${contentHTML}</div>
@@ -577,11 +637,62 @@ function openWindow(idPrefix, title, icon) {
     setupTaskbarItem(winId, title, icon);
     focusWindow(winId);
 
-    // Initialize Snake Game Logic
     if (idPrefix === 'snake') {
         initSnakeGame(winId);
     } else if (idPrefix === 'tictactoe') {
         initTicTacToeState(winId);
+    } else if (idPrefix === 'paint') {
+        initPaintCanvas(winId);
+    }
+}
+
+// --- PAINT APP LOGIC ---
+function initPaintCanvas(winId) {
+    setTimeout(() => {
+        const canvas = document.getElementById(`paint-canvas-${winId}`);
+        if (!canvas) return;
+        const ctx = canvas.getContext('2d');
+        
+        canvas.width = canvas.parentElement.clientWidth;
+        canvas.height = canvas.parentElement.clientHeight;
+
+        let drawing = false;
+
+        function startDrawing(e) {
+            drawing = true;
+            draw(e);
+        }
+
+        function stopDrawing() {
+            drawing = false;
+            ctx.beginPath();
+        }
+
+        function draw(e) {
+            if (!drawing) return;
+            const rect = canvas.getBoundingClientRect();
+            ctx.lineWidth = document.getElementById(`paint-size-${winId}`).value;
+            ctx.lineCap = 'round';
+            ctx.strokeStyle = document.getElementById(`paint-color-${winId}`).value;
+
+            ctx.lineTo(e.clientX - rect.left, e.clientY - rect.top);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(e.clientX - rect.left, e.clientY - rect.top);
+        }
+
+        canvas.addEventListener('mousedown', startDrawing);
+        canvas.addEventListener('mouseup', stopDrawing);
+        canvas.addEventListener('mouseleave', stopDrawing);
+        canvas.addEventListener('mousemove', draw);
+    }, 100);
+}
+
+function clearCanvas(winId) {
+    const canvas = document.getElementById(`paint-canvas-${winId}`);
+    if (canvas) {
+        const ctx = canvas.getContext('2d');
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
     }
 }
 
@@ -608,6 +719,10 @@ function initSnakeGame(winId) {
             const keyPressed = e.keyCode;
             const LEFT = 37, UP = 38, RIGHT = 39, DOWN = 40;
             
+            if ([LEFT, UP, RIGHT, DOWN].includes(keyPressed)) {
+                e.preventDefault();
+            }
+
             if (keyPressed === LEFT && dx === 0) { dx = -10; dy = 0; changingDirection = true; }
             if (keyPressed === UP && dy === 0) { dx = 0; dy = -10; changingDirection = true; }
             if (keyPressed === RIGHT && dx === 0) { dx = 10; dy = 0; changingDirection = true; }
@@ -620,17 +735,15 @@ function initSnakeGame(winId) {
         }
 
         function main() {
-            if (!document.getElementById(winId)) return; // Stop if window closed
+            if (!document.getElementById(winId)) return;
             
             setTimeout(() => {
                 changingDirection = false;
                 ctx.clearRect(0, 0, canvas.width, canvas.height);
                 
-                // Draw Food
                 ctx.fillStyle = 'red';
                 ctx.fillRect(foodX, foodY, 10, 10);
 
-                // Move Snake
                 const head = {x: snake[0].x + dx, y: snake[0].y + dy};
                 snake.unshift(head);
 
@@ -643,11 +756,9 @@ function initSnakeGame(winId) {
                     snake.pop();
                 }
 
-                // Draw Snake
                 ctx.fillStyle = '#0f0';
                 snake.forEach(part => ctx.fillRect(part.x, part.y, 10, 10));
 
-                // Check Wall/Self collision
                 const hitLeft = snake[0].x < 0;
                 const hitRight = snake[0].x >= canvas.width;
                 const hitT = snake[0].y < 0;
@@ -768,7 +879,6 @@ function calcClear(winId) {
 function calcCompute(winId) {
     const display = document.getElementById(`calc-display-${winId}`);
     try {
-        // Safe evaluation of basic math expression
         display.value = eval(display.value.replace(/×/g, '*').replace(/÷/g, '/'));
     } catch {
         display.value = "Error";

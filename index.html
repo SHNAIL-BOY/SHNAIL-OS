@@ -1,0 +1,780 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SHNAIL-OS</title>
+
+<style>
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: Tahoma, sans-serif;
+    user-select: none;
+}
+
+body {
+    overflow: hidden;
+    background: #008080;
+}
+
+#desktop {
+    width: 100vw;
+    height: 100vh;
+    position: relative;
+}
+
+/* Desktop Icons */
+.icon {
+    width: 80px;
+    color: white;
+    text-align: center;
+    margin: 15px;
+    cursor: pointer;
+    text-shadow: 1px 1px #000;
+}
+
+.icon span {
+    font-size: 32px;
+    display: block;
+    margin-bottom: 4px;
+}
+
+.icon div {
+    font-size: 12px;
+}
+
+.icon:focus, .icon:active {
+    outline: 1px dotted white;
+}
+
+/* Windows */
+.window {
+    position: absolute;
+    width: 420px;
+    height: 300px;
+    background: #c0c0c0;
+    border-top: 2px solid #fff;
+    border-left: 2px solid #fff;
+    border-right: 2px solid #404040;
+    border-bottom: 2px solid #404040;
+    box-shadow: 2px 2px 10px rgba(0,0,0,0.5);
+    display: flex;
+    flex-direction: column;
+}
+
+.titlebar {
+    background: linear-gradient(90deg, #000080, #1084d0);
+    color: white;
+    padding: 4px 6px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: move;
+    font-weight: bold;
+    font-size: 12px;
+}
+
+.window.inactive .titlebar {
+    background: linear-gradient(90deg, #808080, #b5b5b5);
+    color: #d0d0d0;
+}
+
+.buttons {
+    display: flex;
+    gap: 2px;
+}
+
+.buttons button {
+    width: 16px;
+    height: 16px;
+    background: #c0c0c0;
+    border-top: 1px solid #fff;
+    border-left: 1px solid #fff;
+    border-right: 1px solid #404040;
+    border-bottom: 1px solid #404040;
+    font-size: 9px;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+
+.buttons button:active {
+    border-top: 1px solid #404040;
+    border-left: 1px solid #404040;
+    border-right: 1px solid #fff;
+    border-bottom: 1px solid #fff;
+    padding-top: 1px;
+}
+
+.content {
+    padding: 10px;
+    background: white;
+    flex-grow: 1;
+    overflow: auto;
+    border-top: 2px solid #808080;
+    border-left: 2px solid #808080;
+    border-right: 2px solid #fff;
+    border-bottom: 2px solid #fff;
+    margin: 3px;
+    font-size: 13px;
+}
+
+/* Retro Game Styling */
+.game-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    background: #000;
+    color: #0f0;
+    font-family: monospace;
+    position: relative;
+    overflow: hidden;
+}
+
+/* Taskbar */
+#taskbar {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 38px;
+    background: #c0c0c0;
+    border-top: 2px solid white;
+    display: flex;
+    align-items: center;
+    padding: 0 3px;
+    gap: 4px;
+    z-index: 9999;
+}
+
+#start {
+    width: 75px;
+    height: 28px;
+    font-weight: bold;
+    background: #c0c0c0;
+    border-top: 2px solid #fff;
+    border-left: 2px solid #fff;
+    border-right: 2px solid #404040;
+    border-bottom: 2px solid #404040;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    cursor: pointer;
+}
+
+#start:active, #start.active {
+    border-top: 2px solid #404040;
+    border-left: 2px solid #404040;
+    border-right: 2px solid #fff;
+    border-bottom: 2px solid #fff;
+    padding-top: 2px;
+}
+
+#taskbar-windows {
+    display: flex;
+    gap: 4px;
+    flex-grow: 1;
+    overflow-x: auto;
+}
+
+.taskbar-item {
+    height: 28px;
+    padding: 0 10px;
+    background: #c0c0c0;
+    border-top: 2px solid #fff;
+    border-left: 2px solid #fff;
+    border-right: 2px solid #404040;
+    border-bottom: 2px solid #404040;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    cursor: pointer;
+    min-width: 120px;
+    max-width: 160px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.taskbar-item.active {
+    border-top: 2px solid #404040;
+    border-left: 2px solid #404040;
+    border-right: 2px solid #fff;
+    border-bottom: 2px solid #fff;
+    background: #dfdfdf;
+    font-weight: bold;
+}
+
+#clock {
+    margin-left: auto;
+    padding: 0 8px;
+    height: 24px;
+    border-top: 2px solid #808080;
+    border-left: 2px solid #808080;
+    border-right: 2px solid #fff;
+    border-bottom: 2px solid #fff;
+    display: flex;
+    align-items: center;
+    font-size: 12px;
+    background: #c0c0c0;
+}
+
+/* Start Menu */
+#startMenu {
+    position: absolute;
+    bottom: 40px;
+    left: 3px;
+    width: 205px;
+    background: #c0c0c0;
+    border-top: 2px solid white;
+    border-left: 2px solid white;
+    border-right: 2px solid #404040;
+    border-bottom: 2px solid #404040;
+    box-shadow: 2px 2px 5px rgba(0,0,0,0.3);
+    display: none;
+    z-index: 10000;
+}
+
+.start-sidebar {
+    background: #808080;
+    width: 25px;
+    float: left;
+    height: 100%;
+    position: absolute;
+    display: flex;
+    align-items: flex-end;
+    padding-bottom: 10px;
+    color: white;
+    writing-mode: vertical-lr;
+    transform: rotate(180deg);
+    font-weight: bold;
+    font-size: 14px;
+    letter-spacing: 1px;
+}
+
+#startMenu ul {
+    list-style: none;
+    margin-left: 25px;
+}
+
+#startMenu li {
+    padding: 8px 12px;
+    cursor: pointer;
+    font-size: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+#startMenu li:hover {
+    background: #000080;
+    color: white;
+}
+
+#startMenu hr {
+    border: none;
+    border-top: 1px solid #808080;
+    border-bottom: 1px solid #fff;
+    margin: 4px 4px 4px 29px;
+}
+</style>
+</head>
+<body>
+
+<div id="desktop">
+
+    <!-- Desktop Icons -->
+    <div class="icon" style="position:absolute;left:20px;top:20px;" ondblclick="openWindow('myComputer', 'My Computer', '📁')">
+        <span>📁</span>
+        <div>My Computer</div>
+    </div>
+
+    <div class="icon" style="position:absolute;left:20px;top:110px;" ondblclick="openWindow('gamesFolder', 'Games Arcade', '🎮')">
+        <span>🎮</span>
+        <div>Games</div>
+    </div>
+
+    <div class="icon" style="position:absolute;left:20px;top:200px;" ondblclick="openWindow('notepad', 'Notepad - Untitled', '📄')">
+        <span>📄</span>
+        <div>Notepad</div>
+    </div>
+
+    <div class="icon" style="position:absolute;left:20px;top:290px;" ondblclick="openWindow('calc', 'Calculator', '🧮')">
+        <span>🧮</span>
+        <div>Calculator</div>
+    </div>
+
+    <!-- Default Welcome Window -->
+    <div class="window" id="window-welcome" style="left:220px;top:80px; z-index: 1;" onmousedown="focusWindow('window-welcome')">
+        <div class="titlebar">
+            <span>📁 Welcome</span>
+            <div class="buttons">
+                <button onclick="minimizeWindow('window-welcome')">_</button>
+                <button onclick="closeWindow('window-welcome')">X</button>
+            </div>
+        </div>
+        <div class="content">
+            <h2>Hello!</h2>
+            <p>Welcome to <b>SHNAIL-OS</b>!</p>
+            <br>
+            <ul>
+                <li>This OS recreation has games, notes and other stuff.</li>
+                <li><b>#SHNAILS4LIFE</b></li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Start Menu -->
+    <div id="startMenu">
+        <div class="start-sidebar"><b>SHNAIL</b>OS</div>
+        <ul>
+            <li onclick="openWindow('myComputer', 'My Computer', '📁'); toggleStartMenu()">📁 My Computer</li>
+            <li onclick="openWindow('gamesFolder', 'Games Arcade', '🎮'); toggleStartMenu()">🎮 Games</li>
+            <li onclick="openWindow('notepad', 'Notepad', '📝'); toggleStartMenu()">📝 Notepad</li>
+            <li onclick="openWindow('calc', 'Calculator', '🧮'); toggleStartMenu()">🧮 Calculator</li>
+            <li><hr></li>
+            <li onclick="alert('Shutting down is not supported in this browser version!'); toggleStartMenu()">❌ Shut Down...</li>
+        </ul>
+    </div>
+
+    <!-- Taskbar -->
+    <div id="taskbar">
+        <button id="start" onclick="toggleStartMenu()">
+            <span>🐌</span> Start
+        </button>
+        <div id="taskbar-windows"></div>
+        <div id="clock"></div>
+    </div>
+
+</div>
+
+<script>
+let highestZIndex = 10;
+const windowsRegistry = {
+    'window-welcome': { title: 'Welcome', icon: '📁' }
+};
+
+// Toggle Start Menu
+const startBtn = document.getElementById("start");
+const menu = document.getElementById("startMenu");
+
+function toggleStartMenu() {
+    const isOpen = menu.style.display === "block";
+    menu.style.display = isOpen ? "none" : "block";
+    if (!isOpen) startBtn.classList.add('active');
+    else startBtn.classList.remove('active');
+}
+
+window.onclick = e => {
+    if (!e.target.closest('#start') && !e.target.closest('#startMenu')) {
+        menu.style.display = "none";
+        startBtn.classList.remove('active');
+    }
+};
+
+// Clock Update
+function updateClock() {
+    document.getElementById("clock").textContent = new Date().toLocaleTimeString([], {
+        hour: '2-digit',
+        minute: '2-digit'
+    });
+}
+setInterval(updateClock, 1000);
+updateClock();
+
+// Window Management & Dragging
+function focusWindow(winId) {
+    const win = document.getElementById(winId);
+    if (!win) return;
+    
+    highestZIndex++;
+    win.style.zIndex = highestZIndex;
+
+    document.querySelectorAll('.window').forEach(w => w.classList.add('inactive'));
+    win.classList.remove('inactive');
+
+    document.querySelectorAll('.taskbar-item').forEach(item => item.classList.remove('active'));
+    const taskItem = document.getElementById(`task-${winId}`);
+    if (taskItem) taskItem.classList.add('active');
+}
+
+function makeDraggable(win) {
+    const bar = win.querySelector(".titlebar");
+    let dragging = false, offsetX = 0, offsetY = 0;
+
+    bar.onmousedown = e => {
+        focusWindow(win.id);
+        dragging = true;
+        offsetX = e.clientX - win.offsetLeft;
+        offsetY = e.clientY - win.offsetTop;
+    };
+
+    document.addEventListener("mousemove", e => {
+        if (!dragging) return;
+        win.style.left = Math.max(0, e.clientX - offsetX) + "px";
+        win.style.top = Math.max(0, e.clientY - offsetY) + "px";
+    });
+
+    document.addEventListener("mouseup", () => {
+        dragging = false;
+    });
+}
+
+document.querySelectorAll('.window').forEach(win => {
+    makeDraggable(win);
+    setupTaskbarItem(win.id, windowsRegistry[win.id].title, windowsRegistry[win.id].icon);
+    focusWindow(win.id);
+});
+
+function closeWindow(winId) {
+    // Clean up game loops if active
+    if (window.gameIntervals && window.gameIntervals[winId]) {
+        clearInterval(window.gameIntervals[winId]);
+        delete window.gameIntervals[winId];
+    }
+    const win = document.getElementById(winId);
+    const taskItem = document.getElementById(`task-${winId}`);
+    if (win) win.remove();
+    if (taskItem) taskItem.remove();
+}
+
+function minimizeWindow(winId) {
+    const win = document.getElementById(winId);
+    if (win) win.style.display = "none";
+    const taskItem = document.getElementById(`task-${winId}`);
+    if (taskItem) taskItem.classList.remove('active');
+}
+
+function toggleWindow(winId) {
+    const win = document.getElementById(winId);
+    if (!win) return;
+
+    if (win.style.display === "none") {
+        win.style.display = "flex";
+        focusWindow(winId);
+    } else if (win.style.zIndex == highestZIndex) {
+        minimizeWindow(winId);
+    } else {
+        focusWindow(winId);
+    }
+}
+
+function setupTaskbarItem(winId, title, icon) {
+    const container = document.getElementById("taskbar-windows");
+    if (document.getElementById(`task-${winId}`)) return;
+
+    const item = document.createElement("div");
+    item.id = `task-${winId}`;
+    item.className = "taskbar-item active";
+    item.innerHTML = `<span>${icon}</span> ${title}`;
+    item.onclick = () => toggleWindow(winId);
+    container.appendChild(item);
+}
+
+function openWindow(idPrefix, title, icon) {
+    const winId = `window-${idPrefix}-${Date.now()}`;
+    windowsRegistry[winId] = { title, icon };
+
+    let contentHTML = `<p>Contents of ${title}</p>`;
+    
+    if (idPrefix === 'notepad') {
+        contentHTML = `<textarea style="width:100%; height:100%; border:none; resize:none; outline:none; font-family:Tahoma; font-size:13px;" placeholder="Type something here..."></textarea>`;
+    } else if (idPrefix === 'myComputer') {
+        contentHTML = `<div style="display:flex; gap:15px;"><div style="text-align:center;">💾<div style="font-size:11px;">3½ Floppy (A:)</div></div><div style="text-align:center;">💽<div style="font-size:11px;">Local Disk (C:)</div></div></div>`;
+    } else if (idPrefix === 'gamesFolder') {
+        contentHTML = `
+            <div style="display:flex; gap:20px; padding:10px;">
+                <div class="icon" style="color:black; cursor:pointer;" ondblclick="openWindow('snake', 'Snake Game', '🐍')">
+                    <span style="font-size:28px;">🐍</span>
+                    <div style="font-size:11px; color:black;">Snake</div>
+                </div>
+                <div class="icon" style="color:black; cursor:pointer;" ondblclick="openWindow('tictactoe', 'Tic-Tac-Toe', '❌')">
+                    <span style="font-size:28px;">❌⭕</span>
+                    <div style="font-size:11px; color:black;">Tic-Tac-Toe</div>
+                </div>
+            </div>
+        `;
+    } else if (idPrefix === 'snake') {
+        contentHTML = `
+            <div class="game-container" id="snake-box-${winId}" tabindex="0">
+                <div style="margin-bottom:5px; font-size:12px;">Score: <span id="snake-score-${winId}">0</span></div>
+                <canvas id="snake-canvas-${winId}" width="240" height="200" style="border:2px solid #0f0; background:#000;"></canvas>
+                <div style="margin-top:5px; font-size:10px; color:#aaa;">Use Arrow Keys to Play</div>
+            </div>
+        `;
+    } else if (idPrefix === 'tictactoe') {
+        contentHTML = `
+            <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; height:100%; gap:10px; background:#c0c0c0;">
+                <div id="ttt-status-${winId}" style="font-weight:bold; font-size:12px;">Player X's Turn</div>
+                <div style="display:grid; grid-template-columns: repeat(3, 50px); grid-template-rows: repeat(3, 50px); gap:3px;" id="ttt-grid-${winId}">
+                    <button style="font-size:20px; font-weight:bold; cursor:pointer;" onclick="makeMove('${winId}', 0)"></button>
+                    <button style="font-size:20px; font-weight:bold; cursor:pointer;" onclick="makeMove('${winId}', 1)"></button>
+                    <button style="font-size:20px; font-weight:bold; cursor:pointer;" onclick="makeMove('${winId}', 2)"></button>
+                    <button style="font-size:20px; font-weight:bold; cursor:pointer;" onclick="makeMove('${winId}', 3)"></button>
+                    <button style="font-size:20px; font-weight:bold; cursor:pointer;" onclick="makeMove('${winId}', 4)"></button>
+                    <button style="font-size:20px; font-weight:bold; cursor:pointer;" onclick="makeMove('${winId}', 5)"></button>
+                    <button style="font-size:20px; font-weight:bold; cursor:pointer;" onclick="makeMove('${winId}', 6)"></button>
+                    <button style="font-size:20px; font-weight:bold; cursor:pointer;" onclick="makeMove('${winId}', 7)"></button>
+                    <button style="font-size:20px; font-weight:bold; cursor:pointer;" onclick="makeMove('${winId}', 8)"></button>
+                </div>
+                <button onclick="resetTicTacToe('${winId}')" style="padding:2px 8px; font-size:11px; cursor:pointer;">Restart</button>
+            </div>
+        `;
+    } else if (idPrefix === 'calc') {
+        contentHTML = `
+            <div style="display:flex; flex-direction:column; height:100%; background:#c0c0c0; padding:5px; gap:5px;">
+                <input type="text" id="calc-display-${winId}" readonly style="width:100%; height:30px; text-align:right; font-size:16px; padding:2px; background:#fff; border:2px inset #fff;" value="0">
+                <div style="display:grid; grid-template-columns: repeat(4, 1fr); gap:3px; flex-grow:1;">
+                    <button onclick="calcAppend('${winId}', '7')" style="font-weight:bold; cursor:pointer;">7</button>
+                    <button onclick="calcAppend('${winId}', '8')" style="font-weight:bold; cursor:pointer;">8</button>
+                    <button onclick="calcAppend('${winId}', '9')" style="font-weight:bold; cursor:pointer;">9</button>
+                    <button onclick="calcAppend('${winId}, '/')" style="font-weight:bold; cursor:pointer;" onclick="calcOp('${winId}', '/')">/</button>
+                    <button onclick="calcAppend('${winId}', '4')" style="font-weight:bold; cursor:pointer;">4</button>
+                    <button onclick="calcAppend('${winId}', '5')" style="font-weight:bold; cursor:pointer;">5</button>
+                    <button onclick="calcAppend('${winId}', '6')" style="font-weight:bold; cursor:pointer;">6</button>
+                    <button onclick="calcOp('${winId}', '*')" style="font-weight:bold; cursor:pointer;">*</button>
+                    <button onclick="calcAppend('${winId}', '1')" style="font-weight:bold; cursor:pointer;">1</button>
+                    <button onclick="calcAppend('${winId}', '2')" style="font-weight:bold; cursor:pointer;">2</button>
+                    <button onclick="calcAppend('${winId}', '3')" style="font-weight:bold; cursor:pointer;">3</button>
+                    <button onclick="calcOp('${winId}', '-')" style="font-weight:bold; cursor:pointer;">-</button>
+                    <button onclick="calcAppend('${winId}', '0')" style="font-weight:bold; cursor:pointer;">0</button>
+                    <button onclick="calcClear('${winId}')" style="font-weight:bold; cursor:pointer; color:red;">C</button>
+                    <button onclick="calcCompute('${winId}')" style="font-weight:bold; cursor:pointer;">=</button>
+                    <button onclick="calcOp('${winId}', '+')" style="font-weight:bold; cursor:pointer;">+</button>
+                </div>
+            </div>
+        `;
+    }
+
+    const win = document.createElement("div");
+    win.id = winId;
+    win.className = "window";
+    win.style.left = (120 + Math.random() * 40) + "px";
+    win.style.top = (80 + Math.random() * 40) + "px";
+    win.innerHTML = `
+        <div class="titlebar">
+            <span>${icon} ${title}</span>
+            <div class="buttons">
+                <button onclick="minimizeWindow('${winId}')">_</button>
+                <button onclick="closeWindow('${winId}')">X</button>
+            </div>
+        </div>
+        <div class="content" style="${idPrefix === 'snake' ? 'padding:0; overflow:hidden;' : ''}">${contentHTML}</div>
+    `;
+
+    win.onmousedown = () => focusWindow(winId);
+    document.getElementById("desktop").appendChild(win);
+    
+    makeDraggable(win);
+    setupTaskbarItem(winId, title, icon);
+    focusWindow(winId);
+
+    // Initialize Snake Game Logic
+    if (idPrefix === 'snake') {
+        initSnakeGame(winId);
+    } else if (idPrefix === 'tictactoe') {
+        initTicTacToeState(winId);
+    }
+}
+
+// --- SNAKE GAME LOGIC ---
+if (!window.gameIntervals) window.gameIntervals = {};
+
+function initSnakeGame(winId) {
+    setTimeout(() => {
+        const canvas = document.getElementById(`snake-canvas-${winId}`);
+        if (!canvas) return;
+        const ctx = canvas.getContext('2d');
+        const scoreEl = document.getElementById(`snake-score-${winId}`);
+        const container = document.getElementById(`snake-box-${winId}`);
+
+        let snake = [{x: 100, y: 100}, {x: 90, y: 100}, {x: 80, y: 100}];
+        let dx = 10, dy = 0;
+        let foodX = 150, foodY = 100;
+        let score = 0;
+        let changingDirection = false;
+
+        container.focus();
+        container.addEventListener('keydown', e => {
+            if (changingDirection) return;
+            const keyPressed = e.keyCode;
+            const LEFT = 37, UP = 38, RIGHT = 39, DOWN = 40;
+            
+            if (keyPressed === LEFT && dx === 0) { dx = -10; dy = 0; changingDirection = true; }
+            if (keyPressed === UP && dy === 0) { dx = 0; dy = -10; changingDirection = true; }
+            if (keyPressed === RIGHT && dx === 0) { dx = 10; dy = 0; changingDirection = true; }
+            if (keyPressed === DOWN && dy === 0) { dx = 0; dy = 10; changingDirection = true; }
+        });
+
+        function createFood() {
+            foodX = Math.floor(Math.random() * 22) * 10;
+            foodY = Math.floor(Math.random() * 18) * 10;
+        }
+
+        function main() {
+            if (!document.getElementById(winId)) return; // Stop if window closed
+            
+            setTimeout(() => {
+                changingDirection = false;
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                
+                // Draw Food
+                ctx.fillStyle = 'red';
+                ctx.fillRect(foodX, foodY, 10, 10);
+
+                // Move Snake
+                const head = {x: snake[0].x + dx, y: snake[0].y + dy};
+                snake.unshift(head);
+
+                const hasEatenFood = snake[0].x === foodX && snake[0].y === foodY;
+                if (hasEatenFood) {
+                    score += 10;
+                    scoreEl.textContent = score;
+                    createFood();
+                } else {
+                    snake.pop();
+                }
+
+                // Draw Snake
+                ctx.fillStyle = '#0f0';
+                snake.forEach(part => ctx.fillRect(part.x, part.y, 10, 10));
+
+                // Check Wall/Self collision
+                const hitLeft = snake[0].x < 0;
+                const hitRight = snake[0].x >= canvas.width;
+                const hitT = snake[0].y < 0;
+                const hitB = snake[0].y >= canvas.height;
+
+                if (hitLeft || hitRight || hitT || hitB) {
+                    alert('Game Over! Final Score: ' + score);
+                    closeWindow(winId);
+                    return;
+                }
+
+                for (let i = 4; i < snake.length; i++) {
+                    if (snake[i].x === snake[0].x && snake[i].y === snake[0].y) {
+                        alert('Game Over! Final Score: ' + score);
+                        closeWindow(winId);
+                        return;
+                    }
+                }
+
+                main();
+            }, 100);
+        }
+        createFood();
+        main();
+    }, 100);
+}
+
+// --- TIC-TAC-TOE LOGIC ---
+const tttStates = {};
+
+function initTicTacToeState(winId) {
+    tttStates[winId] = {
+        board: Array(9).fill(''),
+        isXTurn: true,
+        gameOver: false
+    };
+}
+
+function makeMove(winId, index) {
+    const state = tttStates[winId];
+    if (!state || state.gameOver || state.board[index] !== '') return;
+
+    state.board[index] = state.isXTurn ? 'X' : 'O';
+    state.isXTurn = !state.isXTurn;
+
+    updateTicTacToeUI(winId);
+    checkTicTacToeWinner(winId);
+}
+
+function updateTicTacToeUI(winId) {
+    const state = tttStates[winId];
+    const grid = document.getElementById(`ttt-grid-${winId}`);
+    const status = document.getElementById(`ttt-status-${winId}`);
+    if (!grid) return;
+
+    const buttons = grid.getElementsByTagName('button');
+    for (let i = 0; i < 9; i++) {
+        buttons[i].textContent = state.board[i];
+        buttons[i].style.color = state.board[i] === 'X' ? 'blue' : 'red';
+    }
+
+    if (!state.gameOver) {
+        status.textContent = `Player ${state.isXTurn ? 'X' : 'O'}'s Turn`;
+    }
+}
+
+function checkTicTacToeWinner(winId) {
+    const state = tttStates[winId];
+    const b = state.board;
+    const wins = [
+        [0,1,2], [3,4,5], [6,7,8],
+        [0,3,6], [1,4,7], [2,5,8],
+        [0,4,8], [2,4,6]
+    ];
+
+    let winner = null;
+    for (let combo of wins) {
+        const [x, y, z] = combo;
+        if (b[x] && b[x] === b[y] && b[x] === b[z]) {
+            winner = b[x];
+            break;
+        }
+    }
+
+    const status = document.getElementById(`ttt-status-${winId}`);
+    if (winner) {
+        status.textContent = `Player ${winner} Wins! 🎉`;
+        state.gameOver = true;
+    } else if (!b.includes('')) {
+        status.textContent = `It's a Draw!`;
+        state.gameOver = true;
+    }
+}
+
+function resetTicTacToe(winId) {
+    initTicTacToeState(winId);
+    updateTicTacToeUI(winId);
+}
+
+// --- CALCULATOR LOGIC ---
+function calcAppend(winId, val) {
+    const display = document.getElementById(`calc-display-${winId}`);
+    if (display.value === "0" || display.value === "Error") {
+        display.value = val;
+    } else {
+        display.value += val;
+    }
+}
+
+function calcOp(winId, op) {
+    calcAppend(winId, ` ${op} `);
+}
+
+function calcClear(winId) {
+    document.getElementById(`calc-display-${winId}`).value = "0";
+}
+
+function calcCompute(winId) {
+    const display = document.getElementById(`calc-display-${winId}`);
+    try {
+        // Safe evaluation of basic math expression
+        display.value = eval(display.value.replace(/×/g, '*').replace(/÷/g, '/'));
+    } catch {
+        display.value = "Error";
+    }
+}
+</script>
+
+</body>
+</html>

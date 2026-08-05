@@ -293,14 +293,75 @@ body {
     border-bottom: 1px solid #fff;
     margin: 4px 4px 4px 29px;
 }
+
+#screensaver{
+    position:fixed;
+    inset:0;
+    background:black;
+    display:none;
+    z-index:999999;
+    overflow:hidden;
+    cursor:none;
+}
+
+#logo{
+    position:absolute;
+    color:#00ff00;
+    font:bold 32px monospace;
+    text-shadow:0 0 12px #00ff00;
+}
+
+#contextMenu{
+    position:absolute;
+    display:none;
+    min-width:180px;
+    background:#c0c0c0;
+    border-top:2px solid white;
+    border-left:2px solid white;
+    border-right:2px solid #404040;
+    border-bottom:2px solid #404040;
+    box-shadow:2px 2px 5px rgba(0,0,0,.4);
+    z-index:999999;
+    font-size:12px;
+}
+
+#contextMenu div{
+    padding:6px 12px;
+    cursor:pointer;
+}
+
+#contextMenu div:hover{
+    background:#000080;
+    color:white;
+}
+
+#contextMenu hr{
+    border:none;
+    border-top:1px solid #808080;
+    border-bottom:1px solid white;
+    margin:2px 0;
+}
 </style>
 </head>
 <body>
+    
+<div id="contextMenu">
+    <div onclick="refreshDesktop()">🔄 Refresh</div>
+    <div onclick="openWindow('notepad','Notepad - Untitled','📄')">📄 New Notepad</div>
+     <div onclick="openWindow('gamesFolder','Games Arcade','🎮')">🎮 Play Games</div>
+    <hr>
+    <div onclick="cycleWallpaper()">🎨 Change Wallpaper</div>
+    <div onclick="showAbout()">ℹ️ About SHNAIL-OS</div>
+</div>
+    
+<div id="screensaver">
+<div id="logo">🐌#SHNAILS4LIFE</div>
+</div>
 
 <div id="desktop">
 
-    <div class="icon" style="position:absolute;left:20px;top:10px;" ondblclick="openWindow('myComputer', 'My Computer', '📁')">
-        <span>📁</span>
+    <div class="icon" style="position:absolute;left:20px;top:10px;" ondblclick="openWindow('myComputer', 'My Computer', '🖥')">
+        <span>🖥</span>
         <div>My Computer</div>
     </div>
 
@@ -329,14 +390,20 @@ body {
         <div>Paint</div>
     </div>
     
-        <div class="icon" style="position:absolute;left:20px;top:550px;" ondblclick="openWindow('controlPanel', 'Control Panel', '⚙️')">
+        <div class="icon" style="position:absolute;left:20px;top:550px;" ondblclick="openWindow('controlPanel', 'Desktop Colour Picker', '⚙️')">
         <span>⚙️</span>
-        <div>Control Panel</div>
+        <div>Background Colour</div>
     </div>
     
     <div class="icon" style="position:absolute;left:100px;top:10px;" ondblclick="openWindow('recycle', 'Recycle Bin', '🗑️')">
         <span>🗑️</span>
         <div>Recycle Bin</div>
+    </div>
+    
+    <div class="icon" style="position:absolute;left:100px;top:100px;"
+     ondblclick="openWindow('terminal', 'Terminal', '💻')">
+    <span>💻</span>
+    <div>Terminal</div>
     </div>
 
     <div class="window" id="window-welcome" style="left:220px;top:80px; z-index: 1;" onmousedown="focusWindow('window-welcome')">
@@ -545,13 +612,66 @@ function openWindow(idPrefix, title, icon) {
         contentHTML = `
             <div style="display:flex; flex-direction:column; gap:10px;">
                 <b>Desktop Background Color:</b>
-                <div style="display:flex; gap:8px;">
-                    <button style="width:30px; height:30px; background:#008080; cursor:pointer;" onclick="document.body.style.background='#008080'"></button>
-                    <button style="width:30px; height:30px; background:#4a0e4e; cursor:pointer;" onclick="document.body.style.background='#4a0e4e'"></button>
-                    <button style="width:30px; height:30px; background:#000000; cursor:pointer;" onclick="document.body.style.background='#000000'"></button>
-                    <button style="width:30px; height:30px; background:#2c3e50; cursor:pointer;" onclick="document.body.style.background='#2c3e50'"></button>
-                </div>
-            </div>
+ <div style="display:grid; grid-template-columns:repeat(6,30px); gap:8px;">
+
+<button style="width:30px;height:30px;background:#008080;cursor:pointer;" title="Teal" onclick="document.body.style.background='#008080'"></button>
+
+<button style="width:30px;height:30px;background:#000080;cursor:pointer;" title="Navy" onclick="document.body.style.background='#000080'"></button>
+
+<button style="width:30px;height:30px;background:#2c3e50;cursor:pointer;" title="Slate" onclick="document.body.style.background='#2c3e50'"></button>
+
+<button style="width:30px;height:30px;background:#4a0e4e;cursor:pointer;" title="Purple" onclick="document.body.style.background='#4a0e4e'"></button>
+
+<button style="width:30px;height:30px;background:#000000;cursor:pointer;" title="Black" onclick="document.body.style.background='#000000'"></button>
+
+<button style="width:30px;height:30px;background:#404040;cursor:pointer;" title="Dark Gray" onclick="document.body.style.background='#404040'"></button>
+
+<button style="width:30px;height:30px;background:#808080;cursor:pointer;" title="Gray" onclick="document.body.style.background='#808080'"></button>
+
+<button style="width:30px;height:30px;background:#c0c0c0;cursor:pointer;" title="Silver" onclick="document.body.style.background='#c0c0c0'"></button>
+
+<button style="width:30px;height:30px;background:#ffffff;border:1px solid black;cursor:pointer;" title="White" onclick="document.body.style.background='#ffffff'"></button>
+
+<button style="width:30px;height:30px;background:#ff0000;cursor:pointer;" title="Red" onclick="document.body.style.background='#ff0000'"></button>
+
+<button style="width:30px;height:30px;background:#ff8000;cursor:pointer;" title="Orange" onclick="document.body.style.background='#ff8000'"></button>
+
+<button style="width:30px;height:30px;background:#ffff00;cursor:pointer;" title="Yellow" onclick="document.body.style.background='#ffff00'"></button>
+
+<button style="width:30px;height:30px;background:#00ff00;cursor:pointer;" title="Lime" onclick="document.body.style.background='#00ff00'"></button>
+
+<button style="width:30px;height:30px;background:#008000;cursor:pointer;" title="Green" onclick="document.body.style.background='#008000'"></button>
+
+<button style="width:30px;height:30px;background:#00ffff;cursor:pointer;" title="Cyan" onclick="document.body.style.background='#00ffff'"></button>
+
+<button style="width:30px;height:30px;background:#0080ff;cursor:pointer;" title="Sky Blue" onclick="document.body.style.background='#0080ff'"></button>
+
+<button style="width:30px;height:30px;background:#8000ff;cursor:pointer;" title="Violet" onclick="document.body.style.background='#8000ff'"></button>
+
+<button style="width:30px;height:30px;background:#ff00ff;cursor:pointer;" title="Magenta" onclick="document.body.style.background='#ff00ff'"></button>
+
+<button style="width:30px;height:30px;background:#8b4513;cursor:pointer;" title="Brown" onclick="document.body.style.background='#8b4513'"></button>
+
+<button style="width:30px;height:30px;background:#228b22;cursor:pointer;" title="Forest Green" onclick="document.body.style.background='#228b22'"></button>
+
+<button style="width:30px;height:30px;background:#87ceeb;cursor:pointer;" title="Sky" onclick="document.body.style.background='#87ceeb'"></button>
+
+<button style="width:30px;height:30px;background:#ffc0cb;cursor:pointer;" title="Pink" onclick="document.body.style.background='#ffc0cb'"></button>
+
+<button style="width:30px;height:30px;background:#ffd700;cursor:pointer;" title="Gold" onclick="document.body.style.background='#ffd700'"></button>
+
+<button style="width:30px;height:30px;background:#7fff00;cursor:pointer;" title="Chartreuse" onclick="document.body.style.background='#7fff00'"></button>
+
+</div>
+<div style="margin-top:15px;">
+    <b>Custom Color</b><br><br>
+
+    <input
+        type="color"
+        value="#008080"
+        onchange="document.body.style.background=this.value">
+</div>
+    </div>
         `;
     } else if (idPrefix === 'paint') {
         contentHTML = `
@@ -607,6 +727,20 @@ function openWindow(idPrefix, title, icon) {
                 <button onclick="resetTicTacToe('${winId}')" style="padding:2px 8px; font-size:11px; cursor:pointer;">Restart</button>
             </div>
         `;
+        }else if (idPrefix === 'terminal') {
+    contentHTML = `
+        <div style="height:100%; background:#000; color:#0f0;
+                    font-family:monospace; padding:8px;">
+            <div>SHNAIL-OS Terminal v1.0</div>
+            <div>Type "help" for commands.</div>
+            <input id="terminal-input-${winId}"
+                   style="width:100%; background:#000; color:#0f0;
+                          border:none; outline:none; font-family:monospace;"
+                   autofocus
+                   onkeydown="runTerminalCommand(event, '${winId}')">
+            <div id="terminal-output-${winId}"></div>
+        </div>
+    `;
     } else if (idPrefix === 'calc') {
         contentHTML = `
             <div style="display:flex; flex-direction:column; height:100%; background:#c0c0c0; padding:5px; gap:5px;">
@@ -928,6 +1062,139 @@ function calcCompute(winId) {
         display.value = "Error";
     }
 }
+
+// ===== Screen Saver =====
+const saver = document.getElementById("screensaver");
+const logo = document.getElementById("logo");
+
+let idleTimer;
+let saverRunning = false;
+
+let x = 100;
+let y = 100;
+let dx = 3;
+let dy = 2;
+
+function resetIdle() {
+    clearTimeout(idleTimer);
+
+    if (saverRunning) {
+        saver.style.display = "none";
+        saverRunning = false;
+    }
+
+    idleTimer = setTimeout(startSaver, 20000);
+}
+
+function startSaver() {
+    saverRunning = true;
+    saver.style.display = "block";
+}
+
+setInterval(() => {
+    if (!saverRunning) return;
+
+    x += dx;
+    y += dy;
+
+    const w = logo.offsetWidth;
+    const h = logo.offsetHeight;
+
+    if (x <= 0 || x + w >= window.innerWidth) dx *= -1;
+    if (y <= 0 || y + h >= window.innerHeight) dy *= -1;
+
+    logo.style.left = x + "px";
+    logo.style.top = y + "px";
+}, 16);
+
+["mousemove","mousedown","keydown","touchstart"].forEach(event =>
+    document.addEventListener(event, resetIdle)
+);
+
+resetIdle();
+
+const contextMenu = document.getElementById("contextMenu");
+
+document.addEventListener("contextmenu", e => {
+
+    // Only show on desktop background
+    if (
+        e.target.closest(".window") ||
+        e.target.closest("#taskbar") ||
+        e.target.closest("#startMenu")
+    ) return;
+
+    e.preventDefault();
+
+    contextMenu.style.left = e.pageX + "px";
+    contextMenu.style.top = e.pageY + "px";
+    contextMenu.style.display = "block";
+});
+
+document.addEventListener("click", () => {
+    contextMenu.style.display = "none";
+});
+
+function refreshDesktop(){
+    contextMenu.style.display="none";
+
+    document.querySelectorAll(".icon").forEach(icon=>{
+        icon.style.visibility="hidden";
+
+        setTimeout(()=>{
+            icon.style.visibility="visible";
+        },120);
+    });
+}
+
+const wallpapers=[
+    "#008080",
+    "#2c3e50",
+    "#4a0e4e",
+    "#003366",
+    "#000000",
+    "#3d6b35"
+];
+
+let wallpaperIndex=0;
+
+function cycleWallpaper(){
+    wallpaperIndex++;
+    wallpaperIndex%=wallpapers.length;
+    document.body.style.background=wallpapers[wallpaperIndex];
+}
+
+function showAbout(){
+    alert("SHNAIL-OS\nVersion 1.0\nPowered by FRIENDSHIP 🐌");
+}
+
+//===== TERMINAL LOGIC =====
+
+function runTerminalCommand(event, winId) {
+    if (event.key !== 'Enter') return;
+
+    const input = event.target;
+    const output = document.getElementById(`terminal-output-${winId}`);
+    const command = input.value.trim().toLowerCase();
+
+    const commands = {
+        help: 'Commands: help, about, date, clear, games, shnailwashere',
+        about: 'SHNAIL-OS — a OS recreation by SHNAIL.',
+        date: new Date().toString(),
+        games: 'Available games: Snake and Tic-Tac-Toe.',
+        shnailwashere: 'yes he was.'
+    };
+
+    if (command === 'clear') {
+        output.innerHTML = '';
+    } else {
+        output.innerHTML += `<div>&gt; ${input.value}</div>`;
+        output.innerHTML += `<div>${commands[command] || 'Command not found.'}</div>`;
+    }
+
+    input.value = '';
+}
+
 </script>
 
 </body>

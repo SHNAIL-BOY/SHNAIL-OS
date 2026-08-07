@@ -420,7 +420,7 @@ body {
             <p>Welcome to <b>SHNAIL-OS</b>!</p>
             <br>
             <ul>
-                <li>This OS recreation has games, browser, notes, paint, settings and more!</li>
+                <li>This OS recreation has games, notes, paint, browsing and more!</li>
                 <li><b>#SHNAILS4LIFE</b></li>
             </ul>
         </div>
@@ -765,6 +765,19 @@ function openWindow(idPrefix, title, icon) {
                 </div>
             </div>
         `;
+    } else if (idPrefix === 'tetris') {
+    contentHTML = `
+        <div class="game-container" id="tetris-box-${winId}" tabindex="0" onclick="this.focus()">
+            <div style="margin-bottom:5px;">
+                Score: <span id="tetris-score-${winId}">0</span>
+            </div>
+            <canvas id="tetris-canvas-${winId}" width="240" height="400"
+                style="border:2px solid #0f0;background:#000;"></canvas>
+            <div style="margin-top:5px;font-size:10px;color:#aaa;">
+                Arrow keys: move/rotate • Space: drop
+            </div>
+        </div>
+    `; 
     }
 
     const win = document.createElement("div");
@@ -797,6 +810,8 @@ function openWindow(idPrefix, title, icon) {
 
     if (idPrefix === 'snake') {
         initSnakeGame(winId);
+    } else if (idPrefix === 'tetris') {
+        initTetrisGame(winId);
     } else if (idPrefix === 'tictactoe') {
         initTicTacToeState(winId);
     } else if (idPrefix === 'paint') {
@@ -1083,7 +1098,7 @@ function resetIdle() {
         saverRunning = false;
     }
 
-    idleTimer = setTimeout(startSaver, 20000);
+    idleTimer = setTimeout(startSaver, 120000);
 }
 
 function startSaver() {
@@ -1168,6 +1183,141 @@ function showAbout(){
     alert("SHNAIL-OS\nVersion 1.0\nPowered by FRIENDSHIP 🐌");
 }
 
+//===== TETRIS LOGIC =====
+function initTetrisGame(winId) {
+    const canvas = document.getElementById(`tetris-canvas-${winId}`);
+    const box = document.getElementById(`tetris-box-${winId}`);
+    const scoreEl = document.getElementById(`tetris-score-${winId}`);
+    if (!canvas || !box) return;
+
+    const ctx = canvas.getContext("2d");
+    const cols = 12, rows = 20, size = 20;
+    const board = Array.from({ length: rows }, () => Array(cols).fill(0));
+
+    const shapes = [
+        [[1,1,1,1]],
+        [[1,1],[1,1]],
+        [[0,1,0],[1,1,1]],
+        [[1,0,0],[1,1,1]],
+        [[0,0,1],[1,1,1]],
+        [[1,1,0],[0,1,1]],
+        [[0,1,1],[1,1,0]]
+    ];
+
+    let piece, x, y, score = 0;
+    let timer;
+
+    function newPiece() {
+        piece = shapes[Math.floor(Math.random() * shapes.length)]
+            .map(row => [...row]);
+        x = Math.floor(cols / 2) - 1;
+        y = 0;
+
+        if (collides(piece, x, y)) {
+            alert("Game Over! Final Score: " + score);
+            clearInterval(timer);
+            closeWindow(winId);
+        }
+    }
+
+    function collides(shape, px, py) {
+        return shape.some((row, dy) =>
+            row.some((cell, dx) =>
+                cell && (
+                    px + dx < 0 ||
+                    px + dx >= cols ||
+                    py + dy >= rows ||
+                    (py + dy >= 0 && board[py + dy][px + dx])
+                )
+            )
+        );
+    }
+
+    function merge() {
+        piece.forEach((row, dy) =>
+            row.forEach((cell, dx) => {
+                if (cell && y + dy >= 0) board[y + dy][x + dx] = cell;
+            })
+        );
+    }
+
+    function clearLines() {
+        for (let r = rows - 1; r >= 0; r--) {
+            if (board[r].every(Boolean)) {
+                board.splice(r, 1);
+                board.unshift(Array(cols).fill(0));
+                score += 1;
+                scoreEl.textContent = score;
+                r++;
+            }
+        }
+    }
+
+    function rotate() {
+        const rotated = piece[0].map((_, i) =>
+            piece.map(row => row[i]).reverse()
+        );
+
+        if (!collides(rotated, x, y)) piece = rotated;
+    }
+
+    function draw() {
+        ctx.fillStyle = "#000";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        board.forEach((row, ry) =>
+            row.forEach((cell, rx) => {
+                if (cell) {
+                    ctx.fillStyle = "#00ff00";
+                    ctx.fillRect(rx * size, ry * size, size - 1, size - 1);
+                }
+            })
+        );
+
+        piece.forEach((row, dy) =>
+            row.forEach((cell, dx) => {
+                if (cell) {
+                    ctx.fillStyle = "#00ffff";
+                    ctx.fillRect((x + dx) * size, (y + dy) * size, size - 1, size - 1);
+                }
+            })
+        );
+    }
+
+    function drop() {
+        if (!collides(piece, x, y + 1)) {
+            y++;
+        } else {
+            merge();
+            clearLines();
+            newPiece();
+        }
+        draw();
+    }
+
+    box.addEventListener("keydown", e => {
+        if (e.key === "ArrowLeft" && !collides(piece, x - 1, y)) x--;
+        if (e.key === "ArrowRight" && !collides(piece, x + 1, y)) x++;
+        if (e.key === "ArrowDown") drop();
+
+        if (e.key === "ArrowUp") rotate();
+
+        if (e.code === "Space") {
+            while (!collides(piece, x, y + 1)) y++;
+            drop();
+        }
+
+        e.preventDefault();
+        draw();
+    });
+
+    newPiece();
+    draw();
+    box.focus();
+
+    timer = setInterval(drop, 600);
+}
+
 //===== TERMINAL LOGIC =====
 
 function runTerminalCommand(event, winId) {
@@ -1175,22 +1325,56 @@ function runTerminalCommand(event, winId) {
 
     const input = event.target;
     const output = document.getElementById(`terminal-output-${winId}`);
-    const command = input.value.trim().toLowerCase();
+    const rawCommand = input.value.trim();
+    const command = rawCommand.toLowerCase();
 
-    const commands = {
-        help: 'Commands: help, about, date, clear, games, shnailwashere',
-        about: 'SHNAIL-OS — a OS recreation by SHNAIL.',
-        date: new Date().toString(),
-        games: 'Available games: Snake and Tic-Tac-Toe.',
-        shnailwashere: 'yes he was.'
+    const apps = {
+        notepad: ['notepad', 'Notepad - Untitled', '📄'],
+        games: ['gamesFolder', 'Games Arcade', '🎮'],
+        calculator: ['calc', 'Calculator', '🧮'],
+        calc: ['calc', 'Calculator', '🧮'],
+        trash: ['recycle', 'Recycle Bin', '🗑'],
+        paint: ['paint', 'Paint Brush', '🎨'],
+        browser: ['browser', 'Internet Explorer', '🌐'],
+        terminal: ['terminal', 'Terminal', '💻'],
+        computer: ['myComputer', 'My Computer', '🖥'],
+        tetris: ['tetris', 'Tetris', '🧱']
+        
     };
+
+    let response = '';
 
     if (command === 'clear') {
         output.innerHTML = '';
+    } else if (command === 'help') {
+        response = 'Commands: help, about, date, clear, games, shnailwashere, tetris';
+    } else if (command.startsWith('open ')) {
+        const appName = command.slice(5).trim();
+        const app = apps[appName];
+
+        if (app) {
+            openWindow(app[0], app[1], app[2]);
+            response = `Opening ${app[1]}...`;
+        } else {
+            response = `Unknown app: ${appName}`;
+        }
+    } else if (command === 'about') {
+        response = 'SHNAIL-OS — an OS recreation by SHNAIL.';
+    } else if (command === 'date') {
+        response = new Date().toString();
+    } else if (command === 'games') {
+        response = 'Available games: Snake and Tic-Tac-Toe.';
+    } else if (command === 'tetris') {
+        openWindow('tetris', 'Tetris', '🧱');
+        response = 'Launching Tetris...';
+    } else if (command === 'shnailwashere') {
+        response = 'yes he was.';
     } else {
-        output.innerHTML += `<div>&gt; ${input.value}</div>`;
-        output.innerHTML += `<div>${commands[command] || 'Command not found.'}</div>`;
+        response = 'Command not found.';
     }
+
+    output.innerHTML += `<div>&gt; ${rawCommand}</div>`;
+    output.innerHTML += `<div>${response}</div>`;
 
     input.value = '';
 }

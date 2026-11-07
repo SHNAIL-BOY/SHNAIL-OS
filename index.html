@@ -360,6 +360,13 @@ body {
     color:white;
 }
 
+#contextMenu .context-heading {
+    padding: 6px 12px;
+    color: #555;
+    font-weight: bold;
+    cursor: default;
+}
+
 #contextMenu hr{
     border:none;
     border-top:1px solid #808080;
@@ -380,6 +387,8 @@ body {
 
 .loginBox {
     width: 320px;
+    max-height: calc(100vh - 32px);
+    overflow: auto;
     padding: 30px;
     background: #c0c0c0;
     border: 3px outset #ddd;
@@ -508,6 +517,142 @@ body {
 .explorer-file-icon {
     font-size: 35px;
 }
+
+.tetris-layout {
+    display: flex;
+    align-items: stretch;
+    justify-content: center;
+    gap: 10px;
+    height: 100%;
+    padding: 8px;
+    background: #181818;
+    color: white;
+    font: 12px monospace;
+}
+
+.tetris-board {
+    width: 250px;
+    height: 500px;
+    max-height: 100%;
+    border: 2px solid #aaa;
+    background: #080808;
+}
+
+.tetris-sidebar {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    width: 120px;
+}
+
+.tetris-sidebar section {
+    padding: 8px;
+    border: 1px solid #555;
+    background: #262626;
+}
+
+.tetris-next {
+    display: block;
+    width: 100px;
+    height: 80px;
+    margin-top: 6px;
+}
+
+.pong-canvas {
+    width: min(100%, 420px);
+    height: auto;
+    border: 2px solid #0f0;
+    background: #000;
+}
+
+.settings-section {
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid #aaa;
+}
+
+.settings-app {
+    min-height: 100%;
+}
+
+.settings-tabs {
+    display: flex;
+    gap: 3px;
+    margin: -2px 0 12px;
+    border-bottom: 2px solid #808080;
+}
+
+.settings-tab {
+    padding: 6px 12px;
+    border: 1px solid #808080;
+    border-bottom: 0;
+    background: #c0c0c0;
+    cursor: pointer;
+}
+
+.settings-tab.active {
+    background: white;
+    font-weight: bold;
+}
+
+.settings-panel h3 {
+    margin-bottom: 8px;
+}
+
+.settings-panel p {
+    margin-bottom: 10px;
+}
+
+.settings-panel label {
+    display: block;
+    margin: 8px 0;
+}
+
+.settings-panel button {
+    cursor: pointer;
+}
+
+.settings-colors {
+    display: grid;
+    grid-template-columns: repeat(6, 30px);
+    gap: 8px;
+    margin: 8px 0;
+}
+
+.music-playlist, .explorer-files {
+    overflow: auto;
+}
+
+.music-track {
+    padding: 6px;
+    cursor: pointer;
+}
+
+.music-track:hover, .music-track.active {
+    background: #d0e8ff;
+}
+
+.game-canvas {
+    display: block;
+    max-width: 100%;
+    height: auto;
+    background: #050505;
+    border: 2px solid #0f0;
+}
+
+.desktop-folder {
+    position: absolute;
+    width: 80px;
+    color: white;
+    text-align: center;
+    text-shadow: 1px 1px #000;
+    cursor: pointer;
+}
+
+.desktop-folder span {
+    display: block;
+    font-size: 32px;
+}
 </style>
 </head>
 <body>
@@ -520,7 +665,6 @@ body {
         <img class="loginLogo" src="https://shnail-boy.github.io/SHNAIL-OS/icon.png" alt="SHNAIL-OS icon">
         <h1>SHNAIL-OS</h1>
         <p>Welcome!</p>
-
         <input
             id="loginUsername"
             type="text"
@@ -543,6 +687,7 @@ body {
     
 <div id="contextMenu">
     <div onclick="refreshDesktop()">🔄 Refresh</div>
+    <div onclick="createDesktopFolder()">📁 New Folder</div>
     <div onclick="openWindow('notepad','Notepad - Untitled','📄')">📄 New Notepad</div>
      <div onclick="openWindow('gamesFolder','Games Arcade','🎮')">🎮 Play Games</div>
     <hr>
@@ -586,9 +731,9 @@ body {
         <div>Paint</div>
     </div>
     
-    <div class="icon" style="position:absolute;left:20px;top:550px;" ondblclick="openWindow('controlPanel', 'Desktop Colour Picker', '⚙️')">
+    <div class="icon" style="position:absolute;left:20px;top:550px;" ondblclick="openWindow('settings', 'Settings', '⚙️')">
         <span>⚙️</span>
-        <div>Background Colour</div>
+        <div>Settings</div>
     </div>
     
     <div class="icon" style="position:absolute;left:100px;top:10px;" ondblclick="openWindow('recycle', 'Recycle Bin', '🗑️')">
@@ -641,9 +786,10 @@ body {
             <li onclick="openWindow('notepad', 'Notepad', '📝'); toggleStartMenu()">📝 Notepad</li>
             <li onclick="openWindow('paint', 'Paint Brush', '🎨'); toggleStartMenu()">🎨 Paint</li>
             <li onclick="openWindow('calc', 'Calculator', '🧮'); toggleStartMenu()">🧮 Calculator</li>
-            <li onclick="openWindow('controlPanel', 'Desktop Colour Picker', '⚙️'); toggleStartMenu()">⚙️ Background colour</li>
+            <li onclick="openWindow('settings', 'Settings', '⚙️'); toggleStartMenu()">⚙️ Settings</li>
             <li onclick="openWindow('explorer','File Explorer','📁'); toggleStartMenu()">📁 File Explorer</li>
             <li onclick="openWindow('calendar','Calendar','📅'); toggleStartMenu()">📅 Calendar</li>
+            <li onclick="openWindow('music','Music Player','🎵'); toggleStartMenu()">🎵 Music Player</li>
             <li onclick="openWindow('systemInfo','System Information','ℹ️'); toggleStartMenu()">ℹ️ System Information</li>
             <li><hr></li>
             <li onclick="alert('Shutting down hasn't been created yet!'); toggleStartMenu()">❌ Shut Down...</li>
@@ -699,7 +845,9 @@ function login() {
 
     // Default account
     if (username === "shnail" && password === "4746") {
-        currentUser = username;
+        const displayName = localStorage.getItem("shnail_display_name") || username;
+        const avatar = localStorage.getItem("shnail_avatar") || "🐌";
+        currentUser = `${avatar} ${displayName}`;
 
         document.getElementById("loginScreen").style.display = "none";
 
@@ -906,6 +1054,8 @@ function closeWindow(winId) {
         clearInterval(window.gameIntervals[winId]);
         delete window.gameIntervals[winId];
     }
+    (musicPlaylists[winId] || []).forEach(track => URL.revokeObjectURL(track.url));
+    delete musicPlaylists[winId];
     const win = document.getElementById(winId);
     const taskItem = document.getElementById(`task-${winId}`);
     if (win) win.remove();
@@ -990,7 +1140,7 @@ const defaultExplorerDirectories = {
         { name: "Ideas.txt", type: "file", icon: "📄", content: "Ideas for later:\n- Build something fun\n- Draw a snail" }
     ],
     "C:\\Games\\": [
-        { name: "Arcade Guide.txt", type: "file", icon: "📄", content: "Games available here: Snake, Tic-Tac-Toe, and Minesweeper. Tetris is available from the Terminal." }
+        { name: "Arcade Guide.txt", type: "file", icon: "📄", content: "Games available here: Snake, Tic-Tac-Toe, Minesweeper, Pong, Tetris, Breakout, and Space Invaders. Double-click a game in Games Arcade to play." }
     ],
     "C:\\Pictures\\": [
         { name: "Picture folder.txt", type: "file", icon: "📄", content: "This virtual Pictures folder is ready for your art." }
@@ -1010,6 +1160,66 @@ const notepadFilePaths = {};
 
 function initExplorer(winId) {
     explorerPaths[winId] = "C:\\";
+    renderExplorer(winId);
+}
+
+const explorerSelections = {};
+
+function explorerCreateFolder(winId) {
+    const path = explorerPaths[winId] || "C:\\";
+    let name = prompt("New folder name:", "New Folder");
+    if (!name) return;
+    name = name.trim().replace(/[\\\\/:*?"<>|]/g, "_");
+    if (!name) return;
+    const entries = explorerDirectories[path] ||= [];
+    if (entries.some(entry => entry.name.toLowerCase() === name.toLowerCase())) {
+        alert("An item with that name already exists.");
+        return;
+    }
+    entries.push({ name, type: "folder", icon: "📁" });
+    explorerDirectories[`${path}${name}\\`] ||= [];
+    saveExplorerDirectories();
+    renderExplorer(winId);
+}
+
+function explorerRename(winId) {
+    const path = explorerPaths[winId] || "C:\\";
+    const oldName = explorerSelections[winId];
+    if (!oldName) return alert("Select an item to rename first.");
+    const entries = explorerDirectories[path] || [];
+    const entry = entries.find(item => item.name === oldName);
+    if (!entry) return;
+    let name = prompt("Rename item:", oldName);
+    if (!name) return;
+    name = name.trim().replace(/[\\\\/:*?"<>|]/g, "_");
+    if (!name || entries.some(item => item !== entry && item.name.toLowerCase() === name.toLowerCase())) return;
+    entry.name = name;
+    if (entry.type === "folder") {
+        const oldPath = `${path}${oldName}\\`;
+        const newPath = `${path}${name}\\`;
+        Object.keys(explorerDirectories).filter(key => key === oldPath || key.startsWith(oldPath)).forEach(key => {
+            explorerDirectories[key.replace(oldPath, newPath)] = explorerDirectories[key];
+            if (key !== key.replace(oldPath, newPath)) delete explorerDirectories[key];
+        });
+    }
+    explorerSelections[winId] = name;
+    saveExplorerDirectories();
+    renderExplorer(winId);
+}
+
+function explorerDelete(winId) {
+    const path = explorerPaths[winId] || "C:\\";
+    const name = explorerSelections[winId];
+    if (!name) return alert("Select an item to delete first.");
+    const entry = (explorerDirectories[path] || []).find(item => item.name === name);
+    if (!entry || !confirm(`Delete ${name}?`)) return;
+    explorerDirectories[path] = explorerDirectories[path].filter(item => item !== entry);
+    if (entry.type === "folder") {
+        const folderPath = `${path}${name}\\`;
+        Object.keys(explorerDirectories).filter(key => key === folderPath || key.startsWith(folderPath)).forEach(key => delete explorerDirectories[key]);
+    }
+    delete explorerSelections[winId];
+    saveExplorerDirectories();
     renderExplorer(winId);
 }
 
@@ -1036,6 +1246,11 @@ function renderExplorer(winId) {
         const name = document.createElement("div");
         name.textContent = file.name;
         item.append(fileIcon, name);
+        item.onclick = () => {
+            explorerSelections[winId] = file.name;
+            [...container.children].forEach(child => child.style.outline = "");
+            item.style.outline = "1px dotted #000080";
+        };
         item.ondblclick = () => {
             if (file.type === "folder") {
                 explorerPaths[winId] = `${path}${file.name}\\`;
@@ -1066,6 +1281,11 @@ function explorerHome(winId) {
 }
 
 function openWindow(idPrefix, title, icon, options = {}) {
+    if (idPrefix === 'controlPanel') {
+        idPrefix = 'settings';
+        title = 'Settings';
+        icon = '⚙️';
+    }
     const winId = `window-${idPrefix}-${Date.now()}`;
     windowsRegistry[winId] = { title, icon };
 
@@ -1121,6 +1341,9 @@ function openWindow(idPrefix, title, icon, options = {}) {
             <div class="explorer-toolbar">
                 <button onclick="explorerBack('${winId}')" title="Back">◀</button>
                 <button onclick="explorerHome('${winId}')" title="Home">🏠</button>
+                <button onclick="explorerCreateFolder('${winId}')" title="New folder">📁+</button>
+                <button onclick="explorerRename('${winId}')" title="Rename selected">Rename</button>
+                <button onclick="explorerDelete('${winId}')" title="Delete selected">Delete</button>
                 <input id="explorer-path-${winId}" value="C:\\" readonly>
             </div>
             <div id="explorer-files-${winId}" class="explorer-files"></div>
@@ -1129,6 +1352,50 @@ function openWindow(idPrefix, title, icon, options = {}) {
     `;
     } else if (idPrefix === 'recycle') {
         contentHTML = `<div style="text-align:center; padding-top:20px; color:#666;">Trash folder is empty.</div>`;
+    } else if (idPrefix === 'settings') {
+        contentHTML = `
+            <div class="settings-app" id="settings-app-${winId}">
+                <div class="settings-tabs" role="tablist" aria-label="Settings sections">
+                    <button class="settings-tab active" role="tab" aria-selected="true" onclick="settingsTab('${winId}','wallpaper')">Wallpaper</button>
+                    <button class="settings-tab" role="tab" aria-selected="false" onclick="settingsTab('${winId}','profile')">Profile</button>
+                    <button class="settings-tab" role="tab" aria-selected="false" onclick="settingsTab('${winId}','other')">Other</button>
+                </div>
+                <section class="settings-panel" data-settings-panel="wallpaper">
+                    <h3>Desktop appearance</h3>
+                    <p>Choose a desktop color or image.</p>
+                    <div class="settings-colors">
+                        ${['#008080','#000080','#2c3e50','#4a0e4e','#000000','#404040','#808080','#c0c0c0','#ffffff','#ff0000','#ff8000','#ffff00','#00ff00','#008000','#00ffff','#0080ff','#8000ff','#ff00ff','#8b4513','#228b22','#87ceeb','#ffc0cb','#ffd700','#7fff00'].map(color => `<button title="${color}" style="width:30px;height:30px;background:${color};cursor:pointer;" onclick="setDesktopColor('${color}')"></button>`).join('')}
+                    </div>
+                    <label>Custom color <input type="color" value="#008080" onchange="setDesktopColor(this.value)"></label><br><br>
+                    <label>Background image <input type="file" accept="image/*" onchange="loadWallpaperImage(event)"></label>
+                    <button onclick="clearWallpaperImage()">Remove image</button>
+                </section>
+                <section class="settings-panel" data-settings-panel="profile" hidden>
+                    <h3>Login personalization</h3>
+                    <p>Choose the name and avatar shown for your signed-in profile.</p>
+                    <label>Display name <input id="settings-display-name" maxlength="24" value="${escapeHTML(localStorage.getItem('shnail_display_name') || '')}"></label>
+                    <label>Avatar <select id="settings-avatar">${['🐌','🐱','🐸','🐧','🦊','🤖','🌟'].map(avatar => `<option ${localStorage.getItem('shnail_avatar') === avatar ? 'selected' : ''}>${avatar}</option>`).join('')}</select></label>
+                    <button onclick="savePersonalization()">Save profile</button>
+                </section>
+                <section class="settings-panel" data-settings-panel="other" hidden>
+                    <h3>Other settings</h3>
+                    <p>Your profile and desktop preferences are saved in this browser.</p>
+                    <button onclick="resetSettings()">Restore default settings</button>
+                </section>
+            </div>
+        `;
+    } else if (idPrefix === 'music') {
+        contentHTML = `
+            <div class="music-app" style="display:flex;flex-direction:column;height:100%;gap:8px;">
+                <b>Local Music Player</b>
+                <label>Add audio files: <input id="music-files-${winId}" type="file" accept="audio/*" multiple onchange="loadMusicFiles('${winId}',this.files)"></label>
+                <audio id="music-audio-${winId}" controls style="width:100%;"></audio>
+                <div id="music-playlist-${winId}" class="music-playlist" style="flex:1;border:1px inset #aaa;"></div>
+                <small>Audio stays on your device and is not uploaded.</small>
+            </div>
+        `;
+    } else if (idPrefix === 'desktopFolder') {
+        contentHTML = renderDesktopFolderContents(options.folderName || 'Folder');
     } else if (idPrefix === 'controlPanel') {
         contentHTML = `
             <div style="display:flex; flex-direction:column; gap:10px;">
@@ -1234,6 +1501,18 @@ function openWindow(idPrefix, title, icon, options = {}) {
                     <img src="https://shnail-boy.github.io/SHNAIL-OS/icon.png" alt="" style="width:36px;height:36px;object-fit:contain;margin:0 auto 4px;display:block;">
                     <div style="font-size:11px; color:black;">Shnail Platformer</div>
                 </div>
+                <div class="icon" style="color:black; cursor:pointer;" ondblclick="openWindow('pong', 'Pong', '🏓')">
+                    <span style="font-size:28px;">🏓</span>
+                    <div style="font-size:11px; color:black;">Pong</div>
+                </div>
+                <div class="icon" style="color:black; cursor:pointer;" ondblclick="openWindow('breakout', 'Breakout', '🧱')">
+                    <span style="font-size:28px;">🧱</span>
+                    <div style="font-size:11px; color:black;">Breakout</div>
+                </div>
+                <div class="icon" style="color:black; cursor:pointer;" ondblclick="openWindow('spaceInvaders', 'Space Invaders', '👾')">
+                    <span style="font-size:28px;">👾</span>
+                    <div style="font-size:11px; color:black;">Space Invaders</div>
+                </div>
             </div>
         `;
     } else if (idPrefix === 'shnailPlatformer') {
@@ -1332,17 +1611,28 @@ function openWindow(idPrefix, title, icon, options = {}) {
         `;
     } else if (idPrefix === 'tetris') {
     contentHTML = `
-        <div class="game-container" id="tetris-box-${winId}" tabindex="0" onclick="this.focus()">
-            <div style="margin-bottom:5px;">
-                Score: <span id="tetris-score-${winId}">0</span>
-            </div>
-            <canvas id="tetris-canvas-${winId}" width="240" height="400"
-                style="border:2px solid #0f0;background:#000;"></canvas>
-            <div style="margin-top:5px;font-size:10px;color:#aaa;">
-                Arrow keys: move/rotate • Space: drop
-            </div>
+        <div class="tetris-layout" id="tetris-box-${winId}" tabindex="0" onclick="this.focus()">
+            <canvas class="tetris-board" id="tetris-canvas-${winId}" width="250" height="500"></canvas>
+            <aside class="tetris-sidebar">
+                <section><b>SCORE</b><div id="tetris-score-${winId}" style="font-size:22px;margin-top:5px;">0</div></section>
+                <section><b>LINES</b><div id="tetris-lines-${winId}" style="font-size:18px;margin-top:5px;">0</div></section>
+                <section><b>NEXT</b><canvas class="tetris-next" id="tetris-next-${winId}" width="100" height="80"></canvas></section>
+                <section style="line-height:1.7;"><b>CONTROLS</b><br>← → Move<br>↑ Rotate<br>↓ Soft drop<br>Space Hard drop</section>
+            </aside>
         </div>
     `;
+    } else if (idPrefix === 'pong') {
+        contentHTML = `
+            <div class="game-container" id="pong-box-${winId}" tabindex="0" onclick="this.focus()" style="gap:8px;padding:10px;">
+                <div style="font-size:12px;">YOU <span id="pong-score-${winId}">0 - 0</span> CPU</div>
+                <canvas class="pong-canvas" id="pong-canvas-${winId}" width="420" height="260"></canvas>
+                <div style="font-size:11px;color:#aaa;">Use ↑ and ↓ to move • First to 5 wins</div>
+            </div>
+        `;
+    } else if (idPrefix === 'breakout') {
+        contentHTML = `<div class="game-container" id="breakout-box-${winId}" tabindex="0" onclick="this.focus()"><div>Breakout — ← → or A/D</div><canvas class="game-canvas" id="breakout-canvas-${winId}" width="480" height="320"></canvas></div>`;
+    } else if (idPrefix === 'spaceInvaders') {
+        contentHTML = `<div class="game-container" id="spaceInvaders-box-${winId}" tabindex="0" onclick="this.focus()"><div>Space Invaders — ← → move • Space shoot</div><canvas class="game-canvas" id="invaders-canvas-${winId}" width="480" height="320"></canvas></div>`;
     } else if (idPrefix === 'calendar') {
         contentHTML = `<div id="calendar-app-${winId}" style="text-align:center;"></div>`;
     } else if (idPrefix === 'systemInfo') {
@@ -1366,6 +1656,15 @@ function openWindow(idPrefix, title, icon, options = {}) {
     } else if (idPrefix === 'shnailPlatformer') {
         win.style.width = "800px";
         win.style.height = "600px";
+    } else if (idPrefix === 'tetris') {
+        win.style.width = "440px";
+        win.style.height = "580px";
+    } else if (idPrefix === 'pong') {
+        win.style.width = "500px";
+        win.style.height = "390px";
+    } else if (idPrefix === 'breakout' || idPrefix === 'spaceInvaders') {
+        win.style.width = "520px";
+        win.style.height = "400px";
     }
     win.innerHTML = `
         <div class="titlebar">
@@ -1376,7 +1675,7 @@ function openWindow(idPrefix, title, icon, options = {}) {
                 <button onclick="event.stopPropagation(); closeWindow('${winId}')">X</button>
             </div>
         </div>
-        <div class="content" style="${['snake', 'shnailPlatformer'].includes(idPrefix) ? 'padding:0; overflow:hidden;' : ''}">${contentHTML}</div>
+        <div class="content" style="${['snake', 'shnailPlatformer', 'tetris', 'pong', 'breakout', 'spaceInvaders'].includes(idPrefix) ? 'padding:0; overflow:hidden;' : ''}">${contentHTML}</div>
     `;
 
     win.onmousedown = () => focusWindow(winId);
@@ -1401,6 +1700,12 @@ function openWindow(idPrefix, title, icon, options = {}) {
         initSnakeGame(winId);
     } else if (idPrefix === 'tetris') {
         initTetrisGame(winId);
+    } else if (idPrefix === 'pong') {
+        initPongGame(winId);
+    } else if (idPrefix === 'breakout') {
+        initBreakoutGame(winId);
+    } else if (idPrefix === 'spaceInvaders') {
+        initSpaceInvadersGame(winId);
     } else if (idPrefix === 'tictactoe') {
         initTicTacToeState(winId);
     } else if (idPrefix === 'calendar') {
@@ -1414,6 +1719,176 @@ function openWindow(idPrefix, title, icon, options = {}) {
         initExplorer(winId);
 }
     
+}
+
+// --- SETTINGS, MUSIC PLAYER & EXTRA ARCADE GAMES ---
+function setDesktopColor(color) {
+    document.body.style.background = color;
+    document.body.style.backgroundImage = "";
+    document.body.style.backgroundSize = "";
+    document.body.style.backgroundPosition = "";
+    localStorage.removeItem("shnail_wallpaper_image");
+}
+
+function settingsTab(winId, selectedTab) {
+    const app = document.getElementById(`settings-app-${winId}`);
+    if (!app) return;
+    app.querySelectorAll(".settings-tab").forEach(tab => {
+        const active = tab.textContent.trim().toLowerCase() === selectedTab;
+        tab.classList.toggle("active", active);
+        tab.setAttribute("aria-selected", active);
+    });
+    app.querySelectorAll(".settings-panel").forEach(panel => {
+        panel.hidden = panel.dataset.settingsPanel !== selectedTab;
+    });
+}
+
+function savePersonalization() {
+    const name = document.getElementById("settings-display-name").value.trim().slice(0, 24) || "shnail";
+    const avatar = document.getElementById("settings-avatar").value || "🐌";
+    localStorage.setItem("shnail_display_name", name);
+    localStorage.setItem("shnail_avatar", avatar);
+    currentUser = `${avatar} ${name}`;
+    alert("Profile saved.");
+}
+
+function resetSettings() {
+    if (!confirm("Restore the default profile and desktop wallpaper?")) return;
+    localStorage.setItem("shnail_display_name", "shnail");
+    localStorage.setItem("shnail_avatar", "🐌");
+    currentUser = "🐌 shnail";
+    setDesktopColor("#008080");
+    const nameInput = document.getElementById("settings-display-name");
+    const avatarSelect = document.getElementById("settings-avatar");
+    if (nameInput) nameInput.value = "shnail";
+    if (avatarSelect) avatarSelect.value = "🐌";
+}
+
+const musicPlaylists = {};
+function loadMusicFiles(winId, files) {
+    const playlist = document.getElementById(`music-playlist-${winId}`);
+    const audio = document.getElementById(`music-audio-${winId}`);
+    if (!playlist || !audio) return;
+    musicPlaylists[winId] ||= [];
+    [...files].filter(file => file.type.startsWith("audio/")).forEach(file => {
+        musicPlaylists[winId].push({ name: file.name, url: URL.createObjectURL(file) });
+    });
+    playlist.replaceChildren();
+    musicPlaylists[winId].forEach((track, index) => {
+        const row = document.createElement("div");
+        row.className = "music-track";
+        row.textContent = `${index + 1}. ${track.name}`;
+        row.onclick = () => playMusicTrack(winId, index);
+        playlist.appendChild(row);
+    });
+    if (musicPlaylists[winId].length) playMusicTrack(winId, 0);
+    audio.onended = () => {
+        const next = (musicPlaylists[winId].findIndex(track => track.url === audio.src) + 1) % musicPlaylists[winId].length;
+        if (musicPlaylists[winId].length) playMusicTrack(winId, next);
+    };
+}
+
+function playMusicTrack(winId, index) {
+    const track = (musicPlaylists[winId] || [])[index];
+    const audio = document.getElementById(`music-audio-${winId}`);
+    if (!track || !audio) return;
+    audio.src = track.url;
+    audio.play().catch(() => {});
+    const playlist = document.getElementById(`music-playlist-${winId}`);
+    if (playlist) [...playlist.children].forEach((row, i) => row.classList.toggle("active", i === index));
+}
+
+function initBreakoutGame(winId) {
+    const canvas = document.getElementById(`breakout-canvas-${winId}`);
+    const box = document.getElementById(`breakout-box-${winId}`);
+    if (!canvas || !box) return;
+    const ctx = canvas.getContext("2d");
+    const cols = 8, rows = 5, brickW = 54, brickH = 18, gap = 5;
+    const bricks = Array.from({ length: rows }, () => Array(cols).fill(true));
+    let paddleX = 205, ballX = 240, ballY = 250, vx = 3, vy = -3, ended = false;
+    const paddleW = 70, paddleY = 292;
+    function draw() {
+        ctx.fillStyle = "#050505"; ctx.fillRect(0, 0, canvas.width, canvas.height);
+        bricks.forEach((row, r) => row.forEach((alive, c) => {
+            if (!alive) return;
+            ctx.fillStyle = ["#ff5555", "#ffb347", "#ffe45c", "#5bd778", "#57b7ff"][r];
+            ctx.fillRect(8 + c * (brickW + gap), 25 + r * (brickH + gap), brickW, brickH);
+        }));
+        ctx.fillStyle = "#0f0"; ctx.fillRect(paddleX, paddleY, paddleW, 10);
+        ctx.beginPath(); ctx.arc(ballX, ballY, 7, 0, Math.PI * 2); ctx.fill();
+    }
+    box.addEventListener("keydown", e => {
+        if (["ArrowLeft", "ArrowRight", "a", "d"].includes(e.key)) e.preventDefault();
+        if (e.key === "ArrowLeft" || e.key.toLowerCase() === "a") paddleX = Math.max(0, paddleX - 24);
+        if (e.key === "ArrowRight" || e.key.toLowerCase() === "d") paddleX = Math.min(canvas.width - paddleW, paddleX + 24);
+    });
+    window.gameIntervals[winId] = setInterval(() => {
+        if (!document.getElementById(winId) || ended) return;
+        ballX += vx; ballY += vy;
+        if (ballX < 7 || ballX > canvas.width - 7) vx *= -1;
+        if (ballY < 7) vy *= -1;
+        if (ballY + 7 >= paddleY && ballX >= paddleX && ballX <= paddleX + paddleW) { vy = -Math.abs(vy); vx = (ballX - (paddleX + paddleW / 2)) / 10; }
+        const col = Math.floor((ballX - 8) / (brickW + gap));
+        const row = Math.floor((ballY - 25) / (brickH + gap));
+        if (row >= 0 && row < rows && col >= 0 && col < cols && bricks[row][col]) { bricks[row][col] = false; vy *= -1; }
+        if (ballY > canvas.height) ended = true;
+        if (bricks.every(line => line.every(brick => !brick))) ended = true;
+        draw();
+        if (ended) {
+            clearInterval(window.gameIntervals[winId]); delete window.gameIntervals[winId];
+            showGameOver(winId, ballY > canvas.height ? "The ball fell!" : "You cleared the bricks!", "breakout", "Breakout", "🧱");
+        }
+    }, 16);
+    box.focus(); draw();
+}
+
+function initSpaceInvadersGame(winId) {
+    const canvas = document.getElementById(`invaders-canvas-${winId}`);
+    const box = document.getElementById(`spaceInvaders-box-${winId}`);
+    if (!canvas || !box) return;
+    const ctx = canvas.getContext("2d");
+    let playerX = canvas.width / 2, direction = 1, ended = false, won = false;
+    const aliens = Array.from({ length: 4 }, (_, row) => Array.from({ length: 8 }, (_, col) => ({ x: 45 + col * 48, y: 35 + row * 34, alive: true })));
+    const shots = [];
+    box.addEventListener("keydown", e => {
+        if (["ArrowLeft", "ArrowRight", " "].includes(e.key)) e.preventDefault();
+        if (e.key === "ArrowLeft") playerX = Math.max(15, playerX - 22);
+        if (e.key === "ArrowRight") playerX = Math.min(canvas.width - 15, playerX + 22);
+        if (e.code === "Space") shots.push({ x: playerX, y: 275 });
+    });
+    function draw() {
+        ctx.fillStyle = "#050505"; ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = "#0f0"; ctx.fillRect(playerX - 14, 286, 28, 12);
+        ctx.fillStyle = "#ff5555";
+        aliens.flat().forEach(alien => { if (alien.alive) ctx.fillRect(alien.x, alien.y, 24, 16); });
+        ctx.fillStyle = "#fff"; shots.forEach(shot => ctx.fillRect(shot.x - 2, shot.y, 4, 10));
+    }
+    window.gameIntervals[winId] = setInterval(() => {
+        if (!document.getElementById(winId) || ended) return;
+        let edge = false;
+        aliens.flat().forEach(alien => { if (alien.alive && (alien.x < 8 || alien.x > canvas.width - 32)) edge = true; });
+        if (edge) direction *= -1;
+        aliens.flat().forEach(alien => {
+            if (!alien.alive) return;
+            alien.x += direction * 2;
+            if (edge) alien.y += 12;
+            if (alien.y > 265) ended = true;
+        });
+        shots.forEach(shot => {
+            shot.y -= 6;
+            const hit = aliens.flat().find(alien => alien.alive && shot.x >= alien.x && shot.x <= alien.x + 24 && shot.y >= alien.y && shot.y <= alien.y + 16);
+            if (hit) { hit.alive = false; shot.y = -20; }
+        });
+        for (let i = shots.length - 1; i >= 0; i--) if (shots[i].y < -10) shots.splice(i, 1);
+        won = aliens.flat().every(alien => !alien.alive);
+        if (won) ended = true;
+        draw();
+        if (ended) {
+            clearInterval(window.gameIntervals[winId]); delete window.gameIntervals[winId];
+            showGameOver(winId, won ? "All invaders cleared!" : "The invaders reached you!", "spaceInvaders", "Space Invaders", "👾");
+        }
+    }, 40);
+    box.focus(); draw();
 }
 
 // --- CALENDAR ---
@@ -1928,20 +2403,171 @@ resetIdle();
 
 const contextMenu = document.getElementById("contextMenu");
 
+function escapeHTML(value) {
+    return String(value).replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]));
+}
+
+let desktopFolders = [];
+let desktopAppFolders = {};
+try {
+    desktopFolders = JSON.parse(localStorage.getItem("shnail_desktop_folders") || "[]");
+    desktopAppFolders = JSON.parse(localStorage.getItem("shnail_desktop_app_folders") || "{}");
+} catch {
+    desktopFolders = [];
+    desktopAppFolders = {};
+}
+const desktopApps = {
+    myComputer: ['My Computer', '🖥'], browser: ['Internet Explorer', '🌐'], gamesFolder: ['Games', '🎮'],
+    notepad: ['Notepad', '📄'], calc: ['Calculator', '🧮'], paint: ['Paint', '🎨'],
+    settings: ['Settings', '⚙️'], controlPanel: ['Settings', '⚙️'], recycle: ['Recycle Bin', '🗑️'], terminal: ['Terminal', '💻'],
+    explorer: ['File Explorer', '📁'], calendar: ['Calendar', '📅']
+};
+
+function saveDesktopFolders() {
+    localStorage.setItem("shnail_desktop_folders", JSON.stringify(desktopFolders));
+    localStorage.setItem("shnail_desktop_app_folders", JSON.stringify(desktopAppFolders));
+}
+
+function getDesktopAppKey(icon) {
+    const handler = icon.getAttribute("ondblclick") || "";
+    const match = handler.match(/openWindow\('([^']+)'/);
+    return match && desktopApps[match[1]] ? match[1] : null;
+}
+
+function renderDesktopFolders() {
+    document.querySelectorAll(".desktop-folder").forEach(folder => folder.remove());
+    document.querySelectorAll("#desktop > .icon").forEach(icon => {
+        const appKey = getDesktopAppKey(icon);
+        if (appKey) icon.style.display = desktopAppFolders[appKey] ? "none" : "";
+    });
+    desktopFolders.forEach((name, index) => {
+        const folder = document.createElement("div");
+        folder.className = "desktop-folder";
+        folder.dataset.folder = name;
+        folder.style.left = `${200 + (index % 2) * 90}px`;
+        folder.style.top = `${10 + Math.floor(index / 2) * 90}px`;
+        folder.innerHTML = `<span>📁</span><div>${escapeHTML(name)}</div>`;
+        folder.ondblclick = () => openWindow('desktopFolder', name, '📁', { folderName: name });
+        document.getElementById("desktop").appendChild(folder);
+    });
+}
+
+function createDesktopFolder() {
+    let name = prompt("Name for the new desktop folder:", "New Folder");
+    if (!name) return;
+    name = name.trim().slice(0, 32);
+    if (!name || desktopFolders.some(folder => folder.toLowerCase() === name.toLowerCase())) {
+        alert("Please choose a unique folder name.");
+        return;
+    }
+    desktopFolders.push(name);
+    saveDesktopFolders();
+    renderDesktopFolders();
+    contextMenu.style.display = "none";
+}
+
+function showContextMenu(x, y) {
+    contextMenu.style.display = "block";
+    contextMenu.style.left = `${Math.min(x, window.innerWidth - contextMenu.offsetWidth - 4)}px`;
+    contextMenu.style.top = `${Math.min(y, window.innerHeight - contextMenu.offsetHeight - 4)}px`;
+}
+
+function showMoveMenu(appKey, x, y) {
+    contextMenu.replaceChildren();
+    const heading = document.createElement("div");
+    heading.className = "context-heading";
+    heading.textContent = `Move ${desktopApps[appKey][0]} to folder`;
+    contextMenu.appendChild(heading);
+    const addOption = (label, folderName) => {
+        const option = document.createElement("div");
+        option.textContent = label;
+        option.onclick = () => moveDesktopApp(appKey, folderName);
+        contextMenu.appendChild(option);
+    };
+    addOption("🖥 Desktop", "");
+    desktopFolders.forEach(folder => addOption(`📁 ${folder}`, folder));
+    if (!desktopFolders.length) {
+        const hint = document.createElement("div");
+        hint.className = "context-heading";
+        hint.textContent = "Create a folder on the desktop first";
+        contextMenu.appendChild(hint);
+    }
+    showContextMenu(x, y);
+}
+
+function moveDesktopApp(appKey, folderName) {
+    if (folderName) desktopAppFolders[appKey] = folderName;
+    else delete desktopAppFolders[appKey];
+    saveDesktopFolders();
+    renderDesktopFolders();
+    contextMenu.style.display = "none";
+}
+
+function showFolderMenu(folderName, x, y) {
+    contextMenu.replaceChildren();
+    const heading = document.createElement("div");
+    heading.className = "context-heading";
+    heading.textContent = folderName;
+    contextMenu.appendChild(heading);
+    const rename = document.createElement("div");
+    rename.textContent = "✏️ Rename folder";
+    rename.onclick = () => {
+        const name = prompt("Rename folder:", folderName);
+        if (!name || !name.trim()) return;
+        const cleaned = name.trim().slice(0, 32);
+        if (desktopFolders.some(folder => folder !== folderName && folder.toLowerCase() === cleaned.toLowerCase())) return alert("That folder already exists.");
+        desktopFolders = desktopFolders.map(folder => folder === folderName ? cleaned : folder);
+        Object.keys(desktopAppFolders).forEach(app => { if (desktopAppFolders[app] === folderName) desktopAppFolders[app] = cleaned; });
+        saveDesktopFolders(); renderDesktopFolders(); contextMenu.style.display = "none";
+    };
+    contextMenu.appendChild(rename);
+    const remove = document.createElement("div");
+    remove.textContent = "🗑️ Delete folder";
+    remove.onclick = () => {
+        if (!confirm(`Delete folder ${folderName}? Its apps will return to the desktop.`)) return;
+        desktopFolders = desktopFolders.filter(folder => folder !== folderName);
+        Object.keys(desktopAppFolders).forEach(app => { if (desktopAppFolders[app] === folderName) delete desktopAppFolders[app]; });
+        saveDesktopFolders(); renderDesktopFolders(); contextMenu.style.display = "none";
+    };
+    contextMenu.appendChild(remove);
+    showContextMenu(x, y);
+}
+
+function renderDesktopFolderContents(folderName) {
+    const apps = Object.entries(desktopAppFolders).filter(([, folder]) => folder === folderName);
+    if (!apps.length) return `<p>This folder is empty. Right-click a desktop app and choose <b>Move to folder</b>.</p>`;
+    return `<div class="explorer-files">${apps.map(([key]) => `<div class="desktop-folder-app explorer-file" data-app="${key}" ondblclick="openDesktopApp('${key}')"><div class="explorer-file-icon">${desktopApps[key][1]}</div><div>${escapeHTML(desktopApps[key][0])}</div></div>`).join('')}</div>`;
+}
+
+function openDesktopApp(appKey) {
+    const [title, icon] = desktopApps[appKey] || [];
+    if (title) openWindow(appKey, title, icon);
+}
+
 document.addEventListener("contextmenu", e => {
-
-    // Only show on desktop background
-    if (
-        e.target.closest(".window") ||
-        e.target.closest("#taskbar") ||
-        e.target.closest("#startMenu")
-    ) return;
-
+    const desktopApp = e.target.closest(".icon");
+    const desktopFolder = e.target.closest(".desktop-folder");
+    const folderApp = e.target.closest(".desktop-folder-app");
+    if (e.target.closest(".window") && !folderApp) return;
+    if (e.target.closest("#taskbar") || e.target.closest("#startMenu")) return;
     e.preventDefault();
 
-    contextMenu.style.left = e.pageX + "px";
-    contextMenu.style.top = e.pageY + "px";
-    contextMenu.style.display = "block";
+    if (desktopApp || folderApp) {
+        const appKey = desktopApp ? getDesktopAppKey(desktopApp) : folderApp.dataset.app;
+        if (!appKey) return;
+        showMoveMenu(appKey, e.pageX, e.pageY);
+    } else if (desktopFolder) {
+        showFolderMenu(desktopFolder.dataset.folder, e.pageX, e.pageY);
+    } else {
+        contextMenu.innerHTML = `
+            <div onclick="refreshDesktop()">🔄 Refresh</div>
+            <div onclick="createDesktopFolder()">📁 New Folder</div>
+            <div onclick="openWindow('notepad','Notepad - Untitled','📄')">📄 New Notepad</div>
+            <div onclick="openWindow('gamesFolder','Games Arcade','🎮')">🎮 Play Games</div>
+            <hr><div onclick="openWindow('settings','Settings','⚙️')">⚙️ Settings</div>
+            <div onclick="openWindow('systemInfo','System Information','ℹ️')">ℹ️ About SHNAIL-OS</div>`;
+        showContextMenu(e.pageX, e.pageY);
+    }
 });
 
 document.addEventListener("click", () => {
@@ -2013,43 +2639,148 @@ new MutationObserver(() => {
 function cycleWallpaper(){
     wallpaperIndex++;
     wallpaperIndex%=wallpapers.length;
-    document.body.style.background=wallpapers[wallpaperIndex];
+    setDesktopColor(wallpapers[wallpaperIndex]);
 }
 
+renderDesktopFolders();
 
+//===== PONG LOGIC =====
+function initPongGame(winId) {
+    const canvas = document.getElementById(`pong-canvas-${winId}`);
+    const box = document.getElementById(`pong-box-${winId}`);
+    const scoreEl = document.getElementById(`pong-score-${winId}`);
+    if (!canvas || !box) return;
+
+    const ctx = canvas.getContext("2d");
+    const paddleHeight = 54, paddleWidth = 8;
+    let playerY = 103, cpuY = 103;
+    let ballX = canvas.width / 2, ballY = canvas.height / 2;
+    let ballVX = 3, ballVY = 2;
+    let playerScore = 0, cpuScore = 0;
+    let ended = false;
+
+    function draw() {
+        ctx.fillStyle = "#000";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.setLineDash([8, 8]);
+        ctx.strokeStyle = "#356b35";
+        ctx.beginPath(); ctx.moveTo(canvas.width / 2, 0); ctx.lineTo(canvas.width / 2, canvas.height); ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.fillStyle = "#0f0";
+        ctx.fillRect(12, playerY, paddleWidth, paddleHeight);
+        ctx.fillRect(canvas.width - 20, cpuY, paddleWidth, paddleHeight);
+        ctx.beginPath(); ctx.arc(ballX, ballY, 6, 0, Math.PI * 2); ctx.fill();
+    }
+
+    function resetBall(direction) {
+        ballX = canvas.width / 2;
+        ballY = canvas.height / 2;
+        ballVX = 3 * direction;
+        ballVY = Math.random() * 3 - 1.5;
+    }
+
+    function tick() {
+        if (!document.getElementById(winId) || ended) return;
+        cpuY += (ballY - (cpuY + paddleHeight / 2)) * 0.07;
+        cpuY = Math.max(0, Math.min(canvas.height - paddleHeight, cpuY));
+        ballX += ballVX;
+        ballY += ballVY;
+
+        if (ballY <= 6 || ballY >= canvas.height - 6) ballVY *= -1;
+        if (ballVX < 0 && ballX <= 20 && ballY >= playerY && ballY <= playerY + paddleHeight) {
+            ballVX = Math.abs(ballVX) * 1.04;
+            ballVY = ((ballY - (playerY + paddleHeight / 2)) / (paddleHeight / 2)) * 4;
+        }
+        if (ballVX > 0 && ballX >= canvas.width - 26 && ballY >= cpuY && ballY <= cpuY + paddleHeight) {
+            ballVX = -Math.abs(ballVX) * 1.04;
+            ballVY = ((ballY - (cpuY + paddleHeight / 2)) / (paddleHeight / 2)) * 4;
+        }
+
+        if (ballX < 0) {
+            cpuScore++;
+            scoreEl.textContent = `${playerScore} - ${cpuScore}`;
+            if (cpuScore >= 5) ended = true;
+            else resetBall(1);
+        } else if (ballX > canvas.width) {
+            playerScore++;
+            scoreEl.textContent = `${playerScore} - ${cpuScore}`;
+            if (playerScore >= 5) ended = true;
+            else resetBall(-1);
+        }
+
+        draw();
+        if (ended) {
+            clearInterval(window.gameIntervals[winId]);
+            delete window.gameIntervals[winId];
+            const winner = playerScore >= 5 ? "You win!" : "CPU wins!";
+            showGameOver(winId, `${winner} Final score: ${playerScore} - ${cpuScore}`, "pong", "Pong", "🏓");
+        }
+    }
+
+    box.addEventListener("keydown", e => {
+        if (e.key === "ArrowUp") playerY = Math.max(0, playerY - 24);
+        else if (e.key === "ArrowDown") playerY = Math.min(canvas.height - paddleHeight, playerY + 24);
+        else return;
+        e.preventDefault();
+        draw();
+    });
+
+    draw();
+    box.focus();
+    window.gameIntervals[winId] = setInterval(tick, 16);
+}
 
 //===== TETRIS LOGIC =====
 function initTetrisGame(winId) {
     const canvas = document.getElementById(`tetris-canvas-${winId}`);
+    const nextCanvas = document.getElementById(`tetris-next-${winId}`);
     const box = document.getElementById(`tetris-box-${winId}`);
     const scoreEl = document.getElementById(`tetris-score-${winId}`);
-    if (!canvas || !box) return;
+    const linesEl = document.getElementById(`tetris-lines-${winId}`);
+    if (!canvas || !nextCanvas || !box) return;
 
     const ctx = canvas.getContext("2d");
-    const cols = 12, rows = 20, size = 20;
-    const board = Array.from({ length: rows }, () => Array(cols).fill(0));
-
-    const shapes = [
-        [[1,1,1,1]],
-        [[1,1],[1,1]],
-        [[0,1,0],[1,1,1]],
-        [[1,0,0],[1,1,1]],
-        [[0,0,1],[1,1,1]],
-        [[1,1,0],[0,1,1]],
-        [[0,1,1],[1,1,0]]
+    const nextCtx = nextCanvas.getContext("2d");
+    const cols = 10, rows = 20, size = 25;
+    const board = Array.from({ length: rows }, () => Array(cols).fill(null));
+    const pieces = [
+        { shape: [[1,1,1,1]], color: "#35d9e8" },
+        { shape: [[1,1],[1,1]], color: "#f5d442" },
+        { shape: [[0,1,0],[1,1,1]], color: "#b56bff" },
+        { shape: [[1,0,0],[1,1,1]], color: "#4287f5" },
+        { shape: [[0,0,1],[1,1,1]], color: "#ff9d3d" },
+        { shape: [[1,1,0],[0,1,1]], color: "#55d66b" },
+        { shape: [[0,1,1],[1,1,0]], color: "#f05252" }
     ];
 
-    let piece, x, y, score = 0;
+    let piece, nextPiece, x, y, score = 0, lines = 0;
     let timer;
     let gameEnded = false;
 
-    function newPiece() {
-        piece = shapes[Math.floor(Math.random() * shapes.length)]
-            .map(row => [...row]);
-        x = Math.floor(cols / 2) - 1;
-        y = 0;
+    function randomPiece() {
+        const selected = pieces[Math.floor(Math.random() * pieces.length)];
+        return { shape: selected.shape.map(row => [...row]), color: selected.color };
+    }
 
-        if (collides(piece, x, y)) {
+    function drawPreview() {
+        nextCtx.fillStyle = "#262626";
+        nextCtx.fillRect(0, 0, nextCanvas.width, nextCanvas.height);
+        const shape = nextPiece.shape;
+        const block = 18;
+        const offsetX = (nextCanvas.width - shape[0].length * block) / 2;
+        const offsetY = (nextCanvas.height - shape.length * block) / 2;
+        shape.forEach((row, rowIndex) => row.forEach((cell, colIndex) => {
+            if (cell) drawBlock(nextCtx, offsetX + colIndex * block, offsetY + rowIndex * block, block, nextPiece.color);
+        }));
+    }
+
+    function newPiece() {
+        piece = nextPiece;
+        nextPiece = randomPiece();
+        x = Math.floor(cols / 2) - Math.ceil(piece.shape[0].length / 2);
+        y = 0;
+        drawPreview();
+        if (collides(piece.shape, x, y)) {
             gameEnded = true;
             clearInterval(timer);
             delete window.gameIntervals[winId];
@@ -2058,72 +2789,69 @@ function initTetrisGame(winId) {
     }
 
     function collides(shape, px, py) {
-        return shape.some((row, dy) =>
-            row.some((cell, dx) =>
-                cell && (
-                    px + dx < 0 ||
-                    px + dx >= cols ||
-                    py + dy >= rows ||
-                    (py + dy >= 0 && board[py + dy][px + dx])
-                )
-            )
-        );
+        return shape.some((row, dy) => row.some((cell, dx) => cell && (
+            px + dx < 0 || px + dx >= cols || py + dy >= rows ||
+            (py + dy >= 0 && board[py + dy][px + dx])
+        )));
+    }
+
+    function drawBlock(context, px, py, blockSize, color) {
+        context.fillStyle = color;
+        context.fillRect(px + 1, py + 1, blockSize - 2, blockSize - 2);
+        context.fillStyle = "rgba(255,255,255,.28)";
+        context.fillRect(px + 2, py + 2, blockSize - 4, 3);
     }
 
     function merge() {
-        piece.forEach((row, dy) =>
-            row.forEach((cell, dx) => {
-                if (cell && y + dy >= 0) board[y + dy][x + dx] = cell;
-            })
-        );
+        piece.shape.forEach((row, dy) => row.forEach((cell, dx) => {
+            if (cell && y + dy >= 0) board[y + dy][x + dx] = piece.color;
+        }));
     }
 
     function clearLines() {
+        let cleared = 0;
         for (let r = rows - 1; r >= 0; r--) {
             if (board[r].every(Boolean)) {
                 board.splice(r, 1);
-                board.unshift(Array(cols).fill(0));
-                score += 1;
-                scoreEl.textContent = score;
+                board.unshift(Array(cols).fill(null));
+                cleared++;
                 r++;
             }
+        }
+        if (cleared) {
+            lines += cleared;
+            score += [0, 100, 300, 500, 800][cleared] || cleared * 200;
+            scoreEl.textContent = score;
+            linesEl.textContent = lines;
         }
     }
 
     function rotate() {
-        const rotated = piece[0].map((_, i) =>
-            piece.map(row => row[i]).reverse()
-        );
-
-        if (!collides(rotated, x, y)) piece = rotated;
+        const rotated = piece.shape[0].map((_, i) => piece.shape.map(row => row[i]).reverse());
+        if (!collides(rotated, x, y)) piece.shape = rotated;
     }
 
     function draw() {
-        ctx.fillStyle = "#000";
+        ctx.fillStyle = "#080808";
         ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-        board.forEach((row, ry) =>
-            row.forEach((cell, rx) => {
-                if (cell) {
-                    ctx.fillStyle = "#00ff00";
-                    ctx.fillRect(rx * size, ry * size, size - 1, size - 1);
-                }
-            })
-        );
-
-        piece.forEach((row, dy) =>
-            row.forEach((cell, dx) => {
-                if (cell) {
-                    ctx.fillStyle = "#00ffff";
-                    ctx.fillRect((x + dx) * size, (y + dy) * size, size - 1, size - 1);
-                }
-            })
-        );
+        ctx.strokeStyle = "#202020";
+        for (let col = 0; col <= cols; col++) {
+            ctx.beginPath(); ctx.moveTo(col * size, 0); ctx.lineTo(col * size, canvas.height); ctx.stroke();
+        }
+        for (let row = 0; row <= rows; row++) {
+            ctx.beginPath(); ctx.moveTo(0, row * size); ctx.lineTo(canvas.width, row * size); ctx.stroke();
+        }
+        board.forEach((row, ry) => row.forEach((color, rx) => {
+            if (color) drawBlock(ctx, rx * size, ry * size, size, color);
+        }));
+        piece.shape.forEach((row, dy) => row.forEach((cell, dx) => {
+            if (cell && y + dy >= 0) drawBlock(ctx, (x + dx) * size, (y + dy) * size, size, piece.color);
+        }));
     }
 
     function drop() {
         if (gameEnded) return;
-        if (!collides(piece, x, y + 1)) {
+        if (!collides(piece.shape, x, y + 1)) {
             y++;
         } else {
             merge();
@@ -2135,25 +2863,22 @@ function initTetrisGame(winId) {
 
     box.addEventListener("keydown", e => {
         if (gameEnded) return;
-        if (e.key === "ArrowLeft" && !collides(piece, x - 1, y)) x--;
-        if (e.key === "ArrowRight" && !collides(piece, x + 1, y)) x++;
+        if (["ArrowLeft", "ArrowRight", "ArrowDown", "ArrowUp", "Space"].includes(e.code) || e.key.startsWith("Arrow")) e.preventDefault();
+        if (e.key === "ArrowLeft" && !collides(piece.shape, x - 1, y)) x--;
+        if (e.key === "ArrowRight" && !collides(piece.shape, x + 1, y)) x++;
         if (e.key === "ArrowDown") drop();
-
         if (e.key === "ArrowUp") rotate();
-
         if (e.code === "Space") {
-            while (!collides(piece, x, y + 1)) y++;
+            while (!collides(piece.shape, x, y + 1)) y++;
             drop();
         }
-
-        e.preventDefault();
         draw();
     });
 
+    nextPiece = randomPiece();
     newPiece();
     draw();
     box.focus();
-
     timer = setInterval(drop, 600);
     window.gameIntervals[winId] = timer;
 }
@@ -2182,7 +2907,13 @@ function runTerminalCommand(event, winId) {
         fileexplorer: ['explorer', 'File Explorer', '📁'],
         explorer: ['explorer', 'File Explorer', '📁'],
         tetris: ['tetris', 'Tetris', '🧱'],
+        pong: ['pong', 'Pong', '🏓'],
         calendar: ['calendar', 'Calendar', '📅'],
+        music: ['music', 'Music Player', '🎵'],
+        settings: ['settings', 'Settings', '⚙️'],
+        breakout: ['breakout', 'Breakout', '🧱'],
+        invaders: ['spaceInvaders', 'Space Invaders', '👾'],
+        spaceinvaders: ['spaceInvaders', 'Space Invaders', '👾'],
         info: ['systemInfo', 'System Information', 'ℹ️'],
         system: ['systemInfo', 'System Information', 'ℹ️']
     };
@@ -2192,7 +2923,7 @@ function runTerminalCommand(event, winId) {
     if (command === 'clear') {
         output.innerHTML = '';
     } else if (command === 'help') {
-        response = 'Commands: help, about, date, clear, games, shnailwashere, tetris, calendar, info';
+        response = 'Commands: help, about, date, clear, open music/settings/breakout/invaders, games, shnailwashere, tetris, pong, calendar, info';
     } else if (command.startsWith('open ')) {
         const appName = command.slice(5).trim();
         const app = apps[appName];
@@ -2208,10 +2939,13 @@ function runTerminalCommand(event, winId) {
     } else if (command === 'date') {
         response = new Date().toString();
     } else if (command === 'games') {
-        response = 'Games: Snake, Tic-Tac-Toe, Minesweeper, and Tetris.';
+        response = 'Games: Snake, Tic-Tac-Toe, Minesweeper, Pong, Tetris, Breakout, and Space Invaders.';
     } else if (command === 'tetris') {
         openWindow('tetris', 'Tetris', '🧱');
         response = 'Launching Tetris...';
+    } else if (command === 'pong') {
+        openWindow('pong', 'Pong', '🏓');
+        response = 'Launching Pong...';
     } else if (command === 'calendar' || command === 'info') {
         const app = apps[command];
         openWindow(app[0], app[1], app[2]);

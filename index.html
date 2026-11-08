@@ -3489,7 +3489,7 @@ function runTerminalCommand(event, winId) {
     if (command === 'clear') {
         output.innerHTML = '';
     } else if (command === 'help') {
-        response = 'Commands: help, about, date, clear, open [app], games, shnailwashere, tetris, calendar, info';
+        response = 'Commands: help, about, date, clear, open [app], games, shnailwashere, tetris,info';
     } else if (command.startsWith('open ')) {
         const appName = command.slice(5).trim();
         const app = apps[appName];

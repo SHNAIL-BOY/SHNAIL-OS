@@ -440,6 +440,64 @@ body {
     margin:2px 0;
 }
 
+#osDialogOverlay {
+    position: fixed;
+    inset: 0;
+    z-index: 1000003;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    background: rgba(0, 0, 0, .45);
+}
+
+#osDialog {
+    width: min(360px, 100%);
+    padding: 3px;
+    background: #c0c0c0;
+    border-top: 2px solid #fff;
+    border-left: 2px solid #fff;
+    border-right: 2px solid #404040;
+    border-bottom: 2px solid #404040;
+    box-shadow: 4px 4px 0 rgba(0, 0, 0, .45);
+}
+
+#osDialogTitle {
+    padding: 6px 8px;
+    color: white;
+    background: linear-gradient(90deg, #000080, #1084d0);
+    font-weight: bold;
+    font-size: 13px;
+}
+
+#osDialogMessage {
+    padding: 16px 12px 10px;
+    font-size: 13px;
+    white-space: pre-wrap;
+    user-select: text;
+}
+
+#osDialogInput {
+    display: none;
+    width: calc(100% - 24px);
+    margin: 0 12px 10px;
+    padding: 5px;
+    user-select: text;
+}
+
+#osDialogButtons {
+    display: flex;
+    justify-content: flex-end;
+    gap: 6px;
+    padding: 4px 10px 10px;
+}
+
+#osDialogButtons button {
+    min-width: 70px;
+    padding: 5px 10px;
+    cursor: pointer;
+}
+
 #startupScreen {
     position: fixed;
     inset: 0;
@@ -861,7 +919,7 @@ body {
 
     <div class="window" id="window-welcome" style="left:220px;top:80px; z-index: 1;" onmousedown="focusWindow('window-welcome')">
         <div class="titlebar">
-            <span>📁 Welcome</span>
+            <span><img src="https://shnail-boy.github.io/SHNAIL-OS/SHNAIL-OS-LOGO.png" alt="" style="width:16px;height:16px;object-fit:contain;vertical-align:middle;"> Welcome</span>
             <div class="buttons">
                 <button onclick="event.stopPropagation(); minimizeWindow('window-welcome')">_</button>
                 <button onclick="event.stopPropagation(); maximizeWindow('window-welcome')">🗖</button>
@@ -880,7 +938,7 @@ body {
     </div>
 
     <div id="startMenu">
-        <div class="start-sidebar"><b>SHNAIL</b>OS</div>
+        <div class="start-sidebar"><b> SHNAIL</b>OS</div>
         <ul>
             <li onclick="openWindow('myComputer', 'My Computer', '🖥'); toggleStartMenu()">🖥 My Computer</li>
             <li onclick="openWindow('browser', 'Internet Explorer', '🌐'); toggleStartMenu()">🌐 Internet Explorer</li>
@@ -919,10 +977,19 @@ body {
 
 </div>
 
+<div id="osDialogOverlay" role="presentation">
+    <section id="osDialog" role="dialog" aria-modal="true" aria-labelledby="osDialogTitle">
+        <div id="osDialogTitle">SHNAIL-OS</div>
+        <div id="osDialogMessage"></div>
+        <input id="osDialogInput" type="text" autocomplete="off">
+        <div id="osDialogButtons"></div>
+    </section>
+</div>
+
 <script>
 let highestZIndex = 10;
 const windowsRegistry = {
-    'window-welcome': { title: 'Welcome', icon: '📁' }
+    'window-welcome': { title: 'Welcome', icon: '<img src="https://shnail-boy.github.io/SHNAIL-OS/SHNAIL-OS-LOGO.png" alt="" style="width:16px;height:16px;object-fit:contain;vertical-align:middle;">' }
 };
 
 // Toggle Start Menu
@@ -1016,14 +1083,95 @@ function login() {
 }
 
 // Clock Update
+const defaultTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
+let clockTimeZone = localStorage.getItem("shnail_time_zone") || defaultTimeZone;
+let clockFormat = localStorage.getItem("shnail_time_format") || "12";
+let manualTimeOffset = Number(localStorage.getItem("shnail_time_offset") || 0);
+
+function getOSDate() {
+    return new Date(Date.now() + manualTimeOffset);
+}
+
 function updateClock() {
-    document.getElementById("clock").textContent = new Date().toLocaleTimeString([], {
+    const clock = document.getElementById("clock");
+    if (!clock) return;
+    clock.textContent = new Intl.DateTimeFormat(undefined, {
+        timeZone: clockTimeZone,
         hour: '2-digit',
-        minute: '2-digit'
-    });
+        minute: '2-digit',
+        hour12: clockFormat === "12"
+    }).format(getOSDate());
 }
 setInterval(updateClock, 1000);
 updateClock();
+
+function getTimeZones() {
+    const zones = typeof Intl.supportedValuesOf === "function"
+        ? Intl.supportedValuesOf("timeZone")
+        : ["UTC", "America/Los_Angeles", "America/Denver", "America/Chicago", "America/New_York", "Europe/London", "Europe/Paris", "Asia/Tokyo", "Australia/Sydney"];
+    return [...new Set(["UTC", defaultTimeZone, ...zones])].sort();
+}
+
+function getDateTimeInputValue(date, timeZone) {
+    const parts = new Intl.DateTimeFormat("en-CA", {
+        timeZone,
+        year: "numeric", month: "2-digit", day: "2-digit",
+        hour: "2-digit", minute: "2-digit", hourCycle: "h23"
+    }).formatToParts(date).reduce((result, part) => {
+        result[part.type] = part.value;
+        return result;
+    }, {});
+    return `${parts.year}-${parts.month}-${parts.day}T${parts.hour}:${parts.minute}`;
+}
+
+function zonedDateTimeToTimestamp(value, timeZone) {
+    const [datePart, timePart] = value.split("T");
+    const [year, month, day] = datePart.split("-").map(Number);
+    const [hour, minute] = timePart.split(":").map(Number);
+    const desired = Date.UTC(year, month - 1, day, hour, minute);
+    let timestamp = desired;
+    for (let attempt = 0; attempt < 3; attempt++) {
+        const parts = new Intl.DateTimeFormat("en-CA", {
+            timeZone,
+            year: "numeric", month: "2-digit", day: "2-digit",
+            hour: "2-digit", minute: "2-digit", hourCycle: "h23"
+        }).formatToParts(new Date(timestamp)).reduce((result, part) => {
+            result[part.type] = part.value;
+            return result;
+        }, {});
+        const represented = Date.UTC(Number(parts.year), Number(parts.month) - 1, Number(parts.day), Number(parts.hour), Number(parts.minute));
+        timestamp += desired - represented;
+    }
+    return timestamp;
+}
+
+function previewTimeZone(winId) {
+    const zone = document.getElementById(`settings-time-zone-${winId}`).value;
+    const dateInput = document.getElementById(`settings-manual-time-${winId}`);
+    if (dateInput) dateInput.value = getDateTimeInputValue(getOSDate(), zone);
+}
+
+function applyDateTimeSettings(winId) {
+    const zone = document.getElementById(`settings-time-zone-${winId}`).value;
+    const format = document.getElementById(`settings-time-format-${winId}`).value;
+    const dateInput = document.getElementById(`settings-manual-time-${winId}`);
+    const enteredTime = dateInput.value;
+    clockTimeZone = zone;
+    clockFormat = format;
+    localStorage.setItem("shnail_time_zone", zone);
+    localStorage.setItem("shnail_time_format", format);
+    if (enteredTime) {
+        manualTimeOffset = zonedDateTimeToTimestamp(enteredTime, zone) - Date.now();
+        localStorage.setItem("shnail_time_offset", String(manualTimeOffset));
+    }
+    updateClock();
+    dateInput.value = getDateTimeInputValue(getOSDate(), clockTimeZone);
+}
+
+function setManualDateTimeNow(winId) {
+    const field = document.getElementById(`settings-manual-time-${winId}`);
+    if (field) field.value = getDateTimeInputValue(getOSDate(), clockTimeZone);
+}
 
 // Notepad
 function updateNotepadStats(winId) {
@@ -1652,6 +1800,7 @@ function openWindow(idPrefix, title, icon, options = {}) {
                 <div class="settings-tabs" role="tablist" aria-label="Settings sections">
                     <button class="settings-tab active" role="tab" aria-selected="true" onclick="settingsTab('${winId}','wallpaper')">Wallpaper</button>
                     <button class="settings-tab" role="tab" aria-selected="false" onclick="settingsTab('${winId}','profile')">Profile</button>
+                    <button class="settings-tab" role="tab" aria-selected="false" onclick="settingsTab('${winId}','date & time')">Date &amp; Time</button>
                     <button class="settings-tab" role="tab" aria-selected="false" onclick="settingsTab('${winId}','other')">Other</button>
                 </div>
                 <section class="settings-panel" data-settings-panel="wallpaper">
@@ -1670,6 +1819,25 @@ function openWindow(idPrefix, title, icon, options = {}) {
                     <label>Display name <input id="settings-display-name" maxlength="24" value="${escapeHTML(localStorage.getItem('shnail_display_name') || '')}"></label>
                     <label>Avatar <select id="settings-avatar">${['🐌','🐱','🐸','🐧','🦊','🤖','🌟'].map(avatar => `<option ${localStorage.getItem('shnail_avatar') === avatar ? 'selected' : ''}>${avatar}</option>`).join('')}</select></label>
                     <button onclick="savePersonalization()">Save profile</button>
+                </section>
+                <section class="settings-panel" data-settings-panel="date &amp; time" hidden>
+                    <h3>Date &amp; Time</h3>
+                    <p>Choose the time zone and clock format, or set the date and time manually.</p>
+                    <label>Time zone
+                        <select id="settings-time-zone-${winId}" onchange="previewTimeZone('${winId}')">
+                            ${getTimeZones().map(zone => `<option value="${escapeHTML(zone)}" ${zone === clockTimeZone ? 'selected' : ''}>${escapeHTML(zone)}</option>`).join('')}
+                        </select>
+                    </label>
+                    <label>Time format
+                        <select id="settings-time-format-${winId}">
+                            <option value="12" ${clockFormat === '12' ? 'selected' : ''}>12-hour</option>
+                            <option value="24" ${clockFormat === '24' ? 'selected' : ''}>24-hour</option>
+                        </select>
+                    </label>
+                    <label>Set date &amp; time
+                        <input id="settings-manual-time-${winId}" type="datetime-local" value="${getDateTimeInputValue(getOSDate(), clockTimeZone)}">
+                    </label>
+                    <button onclick="applyDateTimeSettings('${winId}')">Apply changes</button>
                 </section>
                 <section class="settings-panel" data-settings-panel="other" hidden>
                     <h3>Other settings</h3>
@@ -3359,6 +3527,296 @@ function runTerminalCommand(event, winId) {
 
     input.value = '';
 }
+
+// In-OS dialogs keep all messages and confirmations inside the desktop.
+function showOSDialog(message, options = {}, onComplete = () => {}) {
+    const overlay = document.getElementById("osDialogOverlay");
+    const title = document.getElementById("osDialogTitle");
+    const messageBox = document.getElementById("osDialogMessage");
+    const input = document.getElementById("osDialogInput");
+    const buttons = document.getElementById("osDialogButtons");
+    title.textContent = options.title || "SHNAIL-OS";
+    messageBox.textContent = message;
+    input.style.display = options.input ? "block" : "none";
+    input.value = options.defaultValue || "";
+    buttons.replaceChildren();
+
+    const finish = value => {
+        overlay.style.display = "none";
+        onComplete(value);
+    };
+    (options.buttons || [{ label: "OK", value: true }]).forEach(option => {
+        const button = document.createElement("button");
+        button.textContent = option.label;
+        button.onclick = () => finish(option.value === "input" ? input.value : option.value);
+        buttons.appendChild(button);
+    });
+    overlay.style.display = "flex";
+    const firstButton = buttons.querySelector("button");
+    if (options.input) {
+        input.focus();
+        input.select();
+        input.onkeydown = event => {
+            if (event.key === "Enter") finish(input.value);
+            if (event.key === "Escape") finish(null);
+        };
+    } else if (firstButton) {
+        firstButton.focus();
+    }
+}
+
+function osAlert(message) {
+    showOSDialog(String(message));
+}
+
+function osConfirm(message, onConfirm) {
+    showOSDialog(message, {
+        buttons: [
+            { label: "Yes", value: true },
+            { label: "No", value: false }
+        ]
+    }, confirmed => { if (confirmed) onConfirm(); });
+}
+
+function osPrompt(message, defaultValue, onSubmit) {
+    showOSDialog(message, {
+        input: true,
+        defaultValue,
+        buttons: [
+            { label: "OK", value: "input" },
+            { label: "Cancel", value: null }
+        ]
+    }, value => { if (value !== null) onSubmit(value); });
+}
+
+// Safe fallbacks ensure any remaining legacy calls never open browser dialogs.
+window.alert = osAlert;
+window.confirm = message => {
+    showOSDialog(String(message), { buttons: [{ label: "Yes", value: true }, { label: "No", value: false }] });
+    return false;
+};
+window.prompt = (message, defaultValue = "") => {
+    osPrompt(String(message), defaultValue, () => {});
+    return null;
+};
+
+notepadSave = function(winId) {
+    const text = document.getElementById(`notepad-text-${winId}`);
+    if (!text) return;
+    const saveAs = fileName => {
+        fileName = fileName.trim().replaceAll("/", "_").replace(/[\\\\:*?"<>|]/g, "_");
+        if (!fileName) return;
+        if (!/\\.txt$/i.test(fileName)) fileName += ".txt";
+        const filePath = notepadFilePaths[winId] || `C:\\Documents\\${fileName}`;
+        notepadFilePaths[winId] = filePath;
+        const folder = filePath.slice(0, filePath.lastIndexOf("\\") + 1);
+        const savedName = filePath.slice(filePath.lastIndexOf("\\") + 1);
+        const entries = explorerDirectories[folder] ||= [];
+        const existing = entries.find(entry => entry.name === savedName);
+        if (existing) existing.content = text.value;
+        else entries.push({ name: savedName, type: "file", icon: "📄", content: text.value });
+        saveExplorerDirectories();
+        Object.keys(explorerPaths).forEach(id => { if (document.getElementById(id)) renderExplorer(id); });
+        updateNotepadStats(winId);
+        osAlert(`Saved ${filePath} in File Explorer.`);
+    };
+    if (notepadFilePaths[winId]) saveAs(notepadFilePaths[winId].slice(notepadFilePaths[winId].lastIndexOf("\\") + 1));
+    else osPrompt("Save note as (for example, Notes.txt):", "Untitled.txt", saveAs);
+};
+
+notepadDelete = function(winId) {
+    const text = document.getElementById(`notepad-text-${winId}`);
+    if (!text) return;
+    osConfirm("Move this note to the Recycle Bin?", () => {
+        const filePath = notepadFilePaths[winId];
+        if (filePath) {
+            const folder = filePath.slice(0, filePath.lastIndexOf("\\") + 1);
+            const fileName = filePath.slice(filePath.lastIndexOf("\\") + 1);
+            const entries = explorerDirectories[folder] || [];
+            const file = entries.find(entry => entry.name === fileName);
+            if (file) {
+                recycleBin.push({ id: `${Date.now()}-${Math.random().toString(36).slice(2)}`, name: file.name, type: "file", icon: file.icon || "📄", content: file.content || text.value, originalPath: folder, deletedAt: Date.now() });
+                entries.splice(entries.indexOf(file), 1);
+                saveExplorerDirectories();
+                saveRecycleBin();
+                refreshOpenExplorers();
+            }
+            delete notepadFilePaths[winId];
+        }
+        text.value = "";
+        updateNotepadStats(winId);
+    });
+};
+
+explorerCreateFolder = function(winId) {
+    osPrompt("New folder name:", "New Folder", rawName => {
+        const name = rawName.trim().replace(/[\\\\/:*?"<>|]/g, "_");
+        if (!name) return;
+        const path = explorerPaths[winId] || "C:\\";
+        const entries = explorerDirectories[path] ||= [];
+        if (entries.some(entry => entry.name.toLowerCase() === name.toLowerCase())) return osAlert("An item with that name already exists.");
+        entries.push({ name, type: "folder", icon: "📁" });
+        explorerDirectories[`${path}${name}\\`] ||= [];
+        saveExplorerDirectories();
+        renderExplorer(winId);
+    });
+};
+
+explorerRename = function(winId) {
+    const oldName = explorerSelections[winId];
+    if (!oldName) return osAlert("Select an item to rename first.");
+    const path = explorerPaths[winId] || "C:\\";
+    const entries = explorerDirectories[path] || [];
+    const entry = entries.find(item => item.name === oldName);
+    if (!entry) return;
+    osPrompt("Rename item:", oldName, rawName => {
+        const name = rawName.trim().replace(/[\\\\/:*?"<>|]/g, "_");
+        if (!name || entries.some(item => item !== entry && item.name.toLowerCase() === name.toLowerCase())) return osAlert("That name is invalid or already in use.");
+        entry.name = name;
+        if (entry.type === "folder") {
+            const oldPath = `${path}${oldName}\\`;
+            const newPath = `${path}${name}\\`;
+            Object.keys(explorerDirectories).filter(key => key === oldPath || key.startsWith(oldPath)).forEach(key => {
+                explorerDirectories[key.replace(oldPath, newPath)] = explorerDirectories[key];
+                if (key !== key.replace(oldPath, newPath)) delete explorerDirectories[key];
+            });
+        }
+        explorerSelections[winId] = name;
+        saveExplorerDirectories();
+        renderExplorer(winId);
+    });
+};
+
+explorerDelete = function(winId) {
+    const path = explorerPaths[winId] || "C:\\";
+    const name = explorerSelections[winId];
+    if (!name) return osAlert("Select an item to delete first.");
+    const entries = explorerDirectories[path] || [];
+    const entry = entries.find(item => item.name === name);
+    if (!entry) return;
+    osConfirm(`Move ${name} to the Recycle Bin?`, () => {
+        const deletedItem = { id: `${Date.now()}-${Math.random().toString(36).slice(2)}`, name: entry.name, type: entry.type, icon: entry.icon || (entry.type === "folder" ? "📁" : "📄"), content: entry.content || "", originalPath: path, deletedAt: Date.now() };
+        if (entry.type === "folder") {
+            const folderPath = `${path}${name}\\`;
+            deletedItem.folderData = {};
+            Object.keys(explorerDirectories).filter(key => key === folderPath || key.startsWith(folderPath)).forEach(key => { deletedItem.folderData[key] = explorerDirectories[key]; delete explorerDirectories[key]; });
+        }
+        recycleBin.push(deletedItem);
+        entries.splice(entries.indexOf(entry), 1);
+        delete explorerSelections[winId];
+        saveExplorerDirectories();
+        saveRecycleBin();
+        renderExplorer(winId);
+    });
+};
+
+restoreRecycleSelection = function(winId) {
+    if (!recycleBin.some(item => item.id === recycleSelections[winId])) return osAlert("Select an item to restore first.");
+    const index = recycleBin.findIndex(item => item.id === recycleSelections[winId]);
+    const item = recycleBin[index];
+    const targetPath = Object.prototype.hasOwnProperty.call(explorerDirectories, item.originalPath) ? item.originalPath : "C:\\";
+    const entries = explorerDirectories[targetPath] ||= [];
+    const originalName = item.name;
+    let restoredName = originalName, suffix = 1;
+    while (entries.some(entry => entry.name.toLowerCase() === restoredName.toLowerCase())) {
+        const dot = item.type === "file" ? originalName.lastIndexOf(".") : -1;
+        restoredName = dot > 0 ? `${originalName.slice(0, dot)} (restored ${suffix})${originalName.slice(dot)}` : `${originalName} (restored ${suffix})`;
+        suffix++;
+    }
+    const restoredEntry = { name: restoredName, type: item.type, icon: item.icon || "📄" };
+    if (item.type === "file") restoredEntry.content = item.content || "";
+    entries.push(restoredEntry);
+    if (item.type === "folder" && item.folderData) {
+        const oldPrefix = `${item.originalPath}${originalName}\\`;
+        const newPrefix = `${targetPath}${restoredName}\\`;
+        Object.entries(item.folderData).forEach(([oldPath, contents]) => { explorerDirectories[oldPath.startsWith(oldPrefix) ? newPrefix + oldPath.slice(oldPrefix.length) : newPrefix] = contents; });
+        explorerDirectories[newPrefix] ||= [];
+    }
+    recycleBin.splice(index, 1);
+    delete recycleSelections[winId];
+    saveExplorerDirectories(); saveRecycleBin(); refreshOpenExplorers();
+};
+
+deleteRecycleSelection = function(winId) {
+    const index = recycleBin.findIndex(item => item.id === recycleSelections[winId]);
+    if (index < 0) return osAlert("Select an item to delete first.");
+    osConfirm(`Permanently delete ${recycleBin[index].name}? This cannot be undone.`, () => {
+        recycleBin.splice(index, 1);
+        delete recycleSelections[winId];
+        saveRecycleBin();
+    });
+};
+
+emptyRecycleBin = function() {
+    if (!recycleBin.length) return;
+    osConfirm("Permanently delete everything in the Recycle Bin? This cannot be undone.", () => {
+        recycleBin = [];
+        Object.keys(recycleSelections).forEach(id => delete recycleSelections[id]);
+        saveRecycleBin();
+    });
+};
+
+createDesktopFolder = function() {
+    osPrompt("Name for the new desktop folder:", "New Folder", rawName => {
+        const name = rawName.trim().slice(0, 32);
+        if (!name || desktopFolders.some(folder => folder.toLowerCase() === name.toLowerCase())) return osAlert("Please choose a unique folder name.");
+        desktopFolders.push(name);
+        saveDesktopFolders();
+        renderDesktopFolders();
+        contextMenu.style.display = "none";
+    });
+};
+
+showFolderMenu = function(folderName, x, y) {
+    contextMenu.replaceChildren();
+    const heading = document.createElement("div");
+    heading.className = "context-heading";
+    heading.textContent = folderName;
+    contextMenu.appendChild(heading);
+    const rename = document.createElement("div");
+    rename.textContent = "✏️ Rename folder";
+    rename.onclick = () => osPrompt("Rename folder:", folderName, rawName => {
+        const cleaned = rawName.trim().slice(0, 32);
+        if (!cleaned) return;
+        if (desktopFolders.some(folder => folder !== folderName && folder.toLowerCase() === cleaned.toLowerCase())) return osAlert("That folder already exists.");
+        desktopFolders = desktopFolders.map(folder => folder === folderName ? cleaned : folder);
+        Object.keys(desktopAppFolders).forEach(app => { if (desktopAppFolders[app] === folderName) desktopAppFolders[app] = cleaned; });
+        saveDesktopFolders(); renderDesktopFolders(); contextMenu.style.display = "none";
+    });
+    contextMenu.appendChild(rename);
+    const remove = document.createElement("div");
+    remove.textContent = "🗑️ Delete folder";
+    remove.onclick = () => osConfirm(`Delete folder ${folderName}? Its apps will return to the desktop.`, () => {
+        desktopFolders = desktopFolders.filter(folder => folder !== folderName);
+        Object.keys(desktopAppFolders).forEach(app => { if (desktopAppFolders[app] === folderName) delete desktopAppFolders[app]; });
+        saveDesktopFolders(); renderDesktopFolders(); contextMenu.style.display = "none";
+    });
+    contextMenu.appendChild(remove);
+    showContextMenu(x, y);
+};
+
+resetSettings = function() {
+    osConfirm("Restore the default profile and desktop wallpaper?", () => {
+        localStorage.setItem("shnail_display_name", "shnail");
+        localStorage.setItem("shnail_avatar", "🐌");
+        currentUser = "🐌 shnail";
+        setDesktopColor("#008080");
+        clockTimeZone = defaultTimeZone;
+        clockFormat = "12";
+        manualTimeOffset = 0;
+        localStorage.removeItem("shnail_time_zone");
+        localStorage.removeItem("shnail_time_format");
+        localStorage.removeItem("shnail_time_offset");
+        updateClock();
+        document.querySelectorAll('[id^="settings-time-zone-"]').forEach(input => input.value = clockTimeZone);
+        document.querySelectorAll('[id^="settings-time-format-"]').forEach(input => input.value = clockFormat);
+        document.querySelectorAll('[id^="settings-manual-time-"]').forEach(input => input.value = getDateTimeInputValue(getOSDate(), clockTimeZone));
+        const nameInput = document.getElementById("settings-display-name");
+        const avatarSelect = document.getElementById("settings-avatar");
+        if (nameInput) nameInput.value = "shnail";
+        if (avatarSelect) avatarSelect.value = "🐌";
+    });
+};
 
 </script>
 

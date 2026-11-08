@@ -274,6 +274,8 @@ body {
     box-shadow: 2px 2px 5px rgba(0,0,0,0.3);
     display: none;
     z-index: 10000;
+    max-height: calc(100vh - 50px);
+    overflow: visible;
 }
 
 .start-sidebar {
@@ -312,11 +314,75 @@ body {
     color: white;
 }
 
+#startMenu .utilities-folder {
+    display: block;
+    padding: 0;
+}
+
+#startMenu .utilities-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 12px;
+    cursor: pointer;
+}
+
+#startMenu .utilities-submenu {
+    display: none;
+    position: fixed;
+    width: 205px;
+    max-height: calc(100vh - 8px);
+    overflow-y: auto;
+    list-style: none;
+    margin: 0;
+    padding: 2px 0;
+    background: #b0b0b0;
+    border: 2px outset #ddd;
+    box-shadow: 2px 2px 5px rgba(0,0,0,0.3);
+    z-index: 10001;
+}
+
+#startMenu .utilities-folder.open .utilities-submenu {
+    display: block;
+}
+
+#startMenu .utilities-submenu li {
+    padding-left: 24px;
+}
+
 #startMenu hr {
     border: none;
     border-top: 1px solid #808080;
     border-bottom: 1px solid #fff;
     margin: 4px 4px 4px 29px;
+}
+
+#startMenu li.separator {
+    display: block;
+    padding: 0;
+    cursor: default;
+    pointer-events: none;
+}
+
+#startMenu li.separator:hover {
+    background: transparent;
+    color: inherit;
+}
+
+#shutdownScreen {
+    position: fixed;
+    inset: 0;
+    z-index: 1000002;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    background: #000;
+}
+
+#shutdownLogo {
+    width: 180px;
+    height: 180px;
+    object-fit: contain;
 }
 
 #screensaver{
@@ -331,9 +397,9 @@ body {
 
 #logo{
     position:absolute;
-    color:#00ff00;
-    font:bold 32px monospace;
-    text-shadow:0 0 12px #00ff00;
+    width:180px;
+    height:auto;
+    object-fit:contain;
 }
 
 #contextMenu{
@@ -372,6 +438,34 @@ body {
     border-top:1px solid #808080;
     border-bottom:1px solid white;
     margin:2px 0;
+}
+
+#startupScreen {
+    position: fixed;
+    inset: 0;
+    z-index: 1000001;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 18px;
+    color: white;
+    text-align: center;
+    background: radial-gradient(ellipse at center, #087b78, #003333 75%);
+    font-family: Arial, sans-serif;
+}
+
+.startup-logo {
+    width: 150px;
+    height: 150px;
+    object-fit: contain;
+    filter: drop-shadow(0 0 18px rgba(0, 255, 220, .45));
+    animation: startupZoom 1s ease-out both;
+}
+
+@keyframes startupZoom {
+    from { opacity: 0; transform: scale(.15); }
+    to { opacity: 1; transform: scale(1); }
 }
 
 #loginScreen {
@@ -656,13 +750,21 @@ body {
 </style>
 </head>
 <body>
+
+<div id="startupScreen" aria-label="SHNAIL-OS starting">
+    <img class="startup-logo" src="https://shnail-boy.github.io/SHNAIL-OS/SHNAIL-OS-LOGO.png" alt="SHNAIL-OS logo">
+</div>
+
+<div id="shutdownScreen" aria-label="SHNAIL-OS is shutting down">
+    <img id="shutdownLogo" src="https://shnail-boy.github.io/SHNAIL-OS/SHNAIL-OS-LOGO.png" alt="SHNAIL-OS logo">
+</div>
     
-<div id="loginScreen">
+<div id="loginScreen" style="display:none;">
     <div style="position:absolute;top:16px;left:16px;color:white;font:14px Arial,sans-serif;text-shadow:1px 1px #000;">
         Username: shnail<br>Password: 4746
     </div>
     <div class="loginBox">
-        <img class="loginLogo" src="https://shnail-boy.github.io/SHNAIL-OS/icon.png" alt="SHNAIL-OS icon">
+        <img class="loginLogo" src="https://shnail-boy.github.io/SHNAIL-OS/SHNAIL-OS-LOGO.png" alt="SHNAIL-OS icon">
         <h1>SHNAIL-OS</h1>
         <p>Welcome!</p>
         <input
@@ -696,7 +798,7 @@ body {
 </div>
     
 <div id="screensaver">
-<div id="logo">🐌#SHNAILS4LIFE</div>
+    <img id="logo" src="https://shnail-boy.github.io/SHNAIL-OS/SHNAIL-OS-LOGO.png" alt="SHNAIL-OS logo">
 </div>
 
 <div id="desktop">
@@ -788,17 +890,28 @@ body {
             <li onclick="openWindow('calc', 'Calculator', '🧮'); toggleStartMenu()">🧮 Calculator</li>
             <li onclick="openWindow('settings', 'Settings', '⚙️'); toggleStartMenu()">⚙️ Settings</li>
             <li onclick="openWindow('explorer','File Explorer','📁'); toggleStartMenu()">📁 File Explorer</li>
+            <li onclick="openWindow('recycle','Recycle Bin','🗑️'); toggleStartMenu()">🗑️ Recycle Bin</li>
             <li onclick="openWindow('calendar','Calendar','📅'); toggleStartMenu()">📅 Calendar</li>
-            <li onclick="openWindow('music','Music Player','🎵'); toggleStartMenu()">🎵 Music Player</li>
-            <li onclick="openWindow('systemInfo','System Information','ℹ️'); toggleStartMenu()">ℹ️ System Information</li>
-            <li><hr></li>
-            <li onclick="alert('Shutting down hasn't been created yet!'); toggleStartMenu()">❌ Shut Down...</li>
+            <li class="utilities-folder">
+                <div class="utilities-toggle" role="button" tabindex="0" aria-expanded="false" onclick="toggleUtilitiesMenu(event)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleUtilitiesMenu(event)}">
+                    <span>Utilities</span><span aria-hidden="true">▶</span>
+                </div>
+                <ul id="utilitiesMenu" class="utilities-submenu">
+                    <li onclick="openWindow('music','Music Player','🎵'); toggleStartMenu()">🎵 Music Player</li>
+                    <li onclick="openWindow('stopwatch','Stopwatch','⏱️'); toggleStartMenu()">⏱️ Stopwatch</li>
+                    <li onclick="openWindow('stickyNotes','Sticky Notes','🗒️'); toggleStartMenu()">🗒️ Sticky Notes</li>
+                    <li onclick="openWindow('imageViewer','Image Viewer','🖼️'); toggleStartMenu()">🖼️ Image Viewer</li>
+                    <li onclick="openWindow('systemInfo','System Information','ℹ️'); toggleStartMenu()">ℹ️ System Information</li>
+                </ul>
+            </li>
+            <li class="separator" aria-hidden="true"><hr></li>
+            <li onclick="shutdownOS()"><img src="https://shnail-boy.github.io/SHNAIL-OS/power.png" alt="" style="width:16px;height:16px;object-fit:contain;"> Shut Down...</li>
         </ul>
     </div>
 
     <div id="taskbar">
         <button id="start" onclick="toggleStartMenu()">
-            <img src="https://shnail-boy.github.io/SHNAIL-OS/icon.png" alt="" style="width:18px;height:18px;object-fit:contain;"> Start
+            <img src="https://shnail-boy.github.io/SHNAIL-OS/SHNAIL-OS-LOGO.png" alt="" style="width:18px;height:18px;object-fit:contain;"> Start
         </button>
         <div id="taskbar-windows"></div>
         <div id="clock"></div>
@@ -816,11 +929,48 @@ const windowsRegistry = {
 const startBtn = document.getElementById("start");
 const menu = document.getElementById("startMenu");
 
+function bootOS() {
+    document.getElementById("startupScreen").style.display = "none";
+    document.getElementById("loginScreen").style.display = "flex";
+    document.getElementById("loginUsername").focus();
+}
+
+function shutdownOS() {
+    menu.style.display = "none";
+    startBtn.classList.remove("active");
+    document.getElementById("utilitiesMenu").closest(".utilities-folder").classList.remove("open");
+    const shutdownScreen = document.getElementById("shutdownScreen");
+    const shutdownLogo = document.getElementById("shutdownLogo");
+    shutdownLogo.style.display = "block";
+    shutdownScreen.style.display = "flex";
+    setTimeout(() => {
+        shutdownLogo.style.display = "none";
+    }, 2000);
+}
+
+setTimeout(bootOS, 2000);
+
 function toggleStartMenu() {
     const isOpen = menu.style.display === "block";
     menu.style.display = isOpen ? "none" : "block";
     if (!isOpen) startBtn.classList.add('active');
     else startBtn.classList.remove('active');
+}
+
+function toggleUtilitiesMenu(event) {
+    event.stopPropagation();
+    const toggle = event.currentTarget;
+    const folder = toggle.closest('.utilities-folder');
+    const submenu = document.getElementById('utilitiesMenu');
+    const isOpen = folder.classList.toggle('open');
+    toggle.setAttribute('aria-expanded', isOpen);
+
+    if (isOpen) {
+        const menuRect = menu.getBoundingClientRect();
+        const toggleRect = toggle.getBoundingClientRect();
+        submenu.style.left = `${menuRect.right}px`;
+        submenu.style.top = `${Math.max(4, Math.min(toggleRect.top, window.innerHeight - submenu.offsetHeight - 4))}px`;
+    }
 }
 
 window.onclick = e => {
@@ -986,17 +1136,25 @@ function notepadDownload(winId) {
 
 function notepadDelete(winId) {
     const text = document.getElementById(`notepad-text-${winId}`);
-    if (!text || !confirm("Delete this note?")) return;
+    if (!text || !confirm("Move this note to the Recycle Bin?")) return;
 
     const filePath = notepadFilePaths[winId];
     if (filePath) {
         const folder = filePath.slice(0, filePath.lastIndexOf("\\") + 1);
         const fileName = filePath.slice(filePath.lastIndexOf("\\") + 1);
-        explorerDirectories[folder] = (explorerDirectories[folder] || []).filter(file => file.name !== fileName);
-        saveExplorerDirectories();
-        Object.keys(explorerPaths).forEach(explorerId => {
-            if (document.getElementById(explorerId)) renderExplorer(explorerId);
-        });
+        const entries = explorerDirectories[folder] || [];
+        const file = entries.find(entry => entry.name === fileName);
+        if (file) {
+            recycleBin.push({
+                id: `${Date.now()}-${Math.random().toString(36).slice(2)}`,
+                name: file.name, type: "file", icon: file.icon || "📄",
+                content: file.content || text.value, originalPath: folder, deletedAt: Date.now()
+            });
+            entries.splice(entries.indexOf(file), 1);
+            saveExplorerDirectories();
+            saveRecycleBin();
+            refreshOpenExplorers();
+        }
         delete notepadFilePaths[winId];
     }
 
@@ -1054,6 +1212,11 @@ function closeWindow(winId) {
         clearInterval(window.gameIntervals[winId]);
         delete window.gameIntervals[winId];
     }
+    if (window.imageViewerUrls && window.imageViewerUrls[winId]) {
+        URL.revokeObjectURL(window.imageViewerUrls[winId]);
+        delete window.imageViewerUrls[winId];
+    }
+    if (window.stopwatchStates) delete window.stopwatchStates[winId];
     (musicPlaylists[winId] || []).forEach(track => URL.revokeObjectURL(track.url));
     delete musicPlaylists[winId];
     const win = document.getElementById(winId);
@@ -1164,6 +1327,22 @@ function initExplorer(winId) {
 }
 
 const explorerSelections = {};
+const recycleSelections = {};
+let recycleBin = [];
+try {
+    const savedRecycleBin = JSON.parse(localStorage.getItem("shnail_recycle_bin") || "[]");
+    if (Array.isArray(savedRecycleBin)) recycleBin = savedRecycleBin;
+} catch {
+    recycleBin = [];
+}
+
+function saveRecycleBin() {
+    localStorage.setItem("shnail_recycle_bin", JSON.stringify(recycleBin));
+    document.querySelectorAll('[id^="recycle-list-window-"]').forEach(list => {
+        const winId = list.id.slice("recycle-list-".length);
+        renderRecycleBin(winId);
+    });
+}
 
 function explorerCreateFolder(winId) {
     const path = explorerPaths[winId] || "C:\\";
@@ -1211,16 +1390,121 @@ function explorerDelete(winId) {
     const path = explorerPaths[winId] || "C:\\";
     const name = explorerSelections[winId];
     if (!name) return alert("Select an item to delete first.");
-    const entry = (explorerDirectories[path] || []).find(item => item.name === name);
-    if (!entry || !confirm(`Delete ${name}?`)) return;
-    explorerDirectories[path] = explorerDirectories[path].filter(item => item !== entry);
+    const entries = explorerDirectories[path] || [];
+    const entry = entries.find(item => item.name === name);
+    if (!entry || !confirm(`Move ${name} to the Recycle Bin?`)) return;
+
+    const deletedItem = {
+        id: `${Date.now()}-${Math.random().toString(36).slice(2)}`,
+        name: entry.name,
+        type: entry.type,
+        icon: entry.icon || (entry.type === "folder" ? "📁" : "📄"),
+        content: entry.content || "",
+        originalPath: path,
+        deletedAt: Date.now()
+    };
     if (entry.type === "folder") {
         const folderPath = `${path}${name}\\`;
-        Object.keys(explorerDirectories).filter(key => key === folderPath || key.startsWith(folderPath)).forEach(key => delete explorerDirectories[key]);
+        deletedItem.folderData = {};
+        Object.keys(explorerDirectories).filter(key => key === folderPath || key.startsWith(folderPath)).forEach(key => {
+            deletedItem.folderData[key] = explorerDirectories[key];
+            delete explorerDirectories[key];
+        });
     }
+
+    recycleBin.push(deletedItem);
+    entries.splice(entries.indexOf(entry), 1);
     delete explorerSelections[winId];
     saveExplorerDirectories();
+    saveRecycleBin();
     renderExplorer(winId);
+}
+
+function renderRecycleBin(winId) {
+    const list = document.getElementById(`recycle-list-${winId}`);
+    const status = document.getElementById(`recycle-status-${winId}`);
+    if (!list) return;
+    list.replaceChildren();
+    recycleBin.forEach(item => {
+        const row = document.createElement("div");
+        row.className = "explorer-file";
+        row.style.outline = recycleSelections[winId] === item.id ? "1px dotted #000080" : "";
+        const icon = document.createElement("div");
+        icon.className = "explorer-file-icon";
+        icon.textContent = item.icon || "📄";
+        const name = document.createElement("div");
+        name.textContent = item.name;
+        const location = document.createElement("small");
+        location.textContent = item.originalPath || "C:\\";
+        row.append(icon, name, location);
+        row.onclick = () => {
+            recycleSelections[winId] = item.id;
+            renderRecycleBin(winId);
+        };
+        list.appendChild(row);
+    });
+    if (status) status.textContent = recycleBin.length ? `${recycleBin.length} item${recycleBin.length === 1 ? "" : "s"} in the Recycle Bin` : "The Recycle Bin is empty.";
+}
+
+function refreshOpenExplorers() {
+    Object.keys(explorerPaths).forEach(winId => {
+        if (document.getElementById(`explorer-files-${winId}`)) renderExplorer(winId);
+    });
+}
+
+function restoreRecycleSelection(winId) {
+    const index = recycleBin.findIndex(item => item.id === recycleSelections[winId]);
+    if (index < 0) return alert("Select an item to restore first.");
+    const item = recycleBin[index];
+    const targetPath = Object.prototype.hasOwnProperty.call(explorerDirectories, item.originalPath)
+        ? item.originalPath : "C:\\";
+    const entries = explorerDirectories[targetPath] ||= [];
+    const originalName = item.name;
+    let restoredName = originalName;
+    let suffix = 1;
+    while (entries.some(entry => entry.name.toLowerCase() === restoredName.toLowerCase())) {
+        const dot = item.type === "file" ? originalName.lastIndexOf(".") : -1;
+        restoredName = dot > 0
+            ? `${originalName.slice(0, dot)} (restored ${suffix})${originalName.slice(dot)}`
+            : `${originalName} (restored ${suffix})`;
+        suffix++;
+    }
+
+    const restoredEntry = { name: restoredName, type: item.type, icon: item.icon || "📄" };
+    if (item.type === "file") restoredEntry.content = item.content || "";
+    entries.push(restoredEntry);
+
+    if (item.type === "folder" && item.folderData) {
+        const oldPrefix = `${item.originalPath}${originalName}\\`;
+        const newPrefix = `${targetPath}${restoredName}\\`;
+        Object.entries(item.folderData).forEach(([oldPath, contents]) => {
+            explorerDirectories[oldPath.startsWith(oldPrefix) ? newPrefix + oldPath.slice(oldPrefix.length) : newPrefix] = contents;
+        });
+        explorerDirectories[newPrefix] ||= [];
+    }
+
+    recycleBin.splice(index, 1);
+    delete recycleSelections[winId];
+    saveExplorerDirectories();
+    saveRecycleBin();
+    refreshOpenExplorers();
+}
+
+function deleteRecycleSelection(winId) {
+    const index = recycleBin.findIndex(item => item.id === recycleSelections[winId]);
+    if (index < 0) return alert("Select an item to delete first.");
+    if (!confirm(`Permanently delete ${recycleBin[index].name}? This cannot be undone.`)) return;
+    recycleBin.splice(index, 1);
+    delete recycleSelections[winId];
+    saveRecycleBin();
+}
+
+function emptyRecycleBin(winId) {
+    if (!recycleBin.length) return;
+    if (!confirm("Permanently delete everything in the Recycle Bin? This cannot be undone.")) return;
+    recycleBin = [];
+    Object.keys(recycleSelections).forEach(id => delete recycleSelections[id]);
+    saveRecycleBin();
 }
 
 function renderExplorer(winId) {
@@ -1351,7 +1635,17 @@ function openWindow(idPrefix, title, icon, options = {}) {
         </div>
     `;
     } else if (idPrefix === 'recycle') {
-        contentHTML = `<div style="text-align:center; padding-top:20px; color:#666;">Trash folder is empty.</div>`;
+        contentHTML = `
+            <div class="explorer" style="gap:6px;">
+                <div style="display:flex;gap:6px;align-items:center;">
+                    <button onclick="restoreRecycleSelection('${winId}')">Restore</button>
+                    <button onclick="deleteRecycleSelection('${winId}')">Delete permanently</button>
+                    <button onclick="emptyRecycleBin('${winId}')">Empty Recycle Bin</button>
+                </div>
+                <div id="recycle-list-${winId}" class="explorer-files" style="grid-template-columns:repeat(auto-fill,90px);"></div>
+                <div id="recycle-status-${winId}" style="font-size:11px;color:#555;"></div>
+            </div>
+        `;
     } else if (idPrefix === 'settings') {
         contentHTML = `
             <div class="settings-app" id="settings-app-${winId}">
@@ -1382,6 +1676,34 @@ function openWindow(idPrefix, title, icon, options = {}) {
                     <p>Your profile and desktop preferences are saved in this browser.</p>
                     <button onclick="resetSettings()">Restore default settings</button>
                 </section>
+            </div>
+        `;
+    } else if (idPrefix === 'stopwatch') {
+        contentHTML = `
+            <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;height:100%;background:#e8e8e8;">
+                <output id="stopwatch-display-${winId}" style="font: bold 38px monospace;">00:00.0</output>
+                <div style="display:flex;gap:8px;">
+                    <button onclick="toggleStopwatch('${winId}')">Start</button>
+                    <button onclick="resetStopwatch('${winId}')">Reset</button>
+                </div>
+            </div>
+        `;
+    } else if (idPrefix === 'stickyNotes') {
+        contentHTML = `
+            <div style="display:flex;flex-direction:column;height:100%;gap:6px;">
+                <b>Sticky Notes <small style="font-weight:normal;">— saves automatically</small></b>
+                <textarea id="sticky-note-${winId}" placeholder="Write a reminder..." oninput="saveStickyNote(this)" style="flex:1;resize:none;padding:10px;font:14px 'Courier New',monospace;background:#fff7b2;border:1px inset #aaa;"></textarea>
+                <button onclick="clearStickyNote('${winId}')" style="align-self:flex-start;">Clear note</button>
+            </div>
+        `;
+    } else if (idPrefix === 'imageViewer') {
+        contentHTML = `
+            <div style="display:flex;flex-direction:column;height:100%;gap:8px;">
+                <label>Open an image from this device: <input id="image-file-${winId}" type="file" accept="image/*" onchange="showLocalImage('${winId}',this.files[0])"></label>
+                <div style="flex:1;min-height:0;display:flex;align-items:center;justify-content:center;background:#333;overflow:auto;">
+                    <img id="image-preview-${winId}" alt="Image preview" style="display:none;max-width:100%;max-height:100%;object-fit:contain;">
+                    <span id="image-placeholder-${winId}" style="color:white;">Choose an image to preview it.</span>
+                </div>
             </div>
         `;
     } else if (idPrefix === 'music') {
@@ -1497,8 +1819,8 @@ function openWindow(idPrefix, title, icon, options = {}) {
                     <span style="font-size:28px;">💣 </span>
                     <div style="font-size:11px; color:black;">Minesweeper</div>
                 </div>
-                <div class="icon" style="color:black; cursor:pointer;" ondblclick="openWindow('shnailPlatformer', 'Shnail Platformer', '🐌')">
-                    <img src="https://shnail-boy.github.io/SHNAIL-OS/icon.png" alt="" style="width:36px;height:36px;object-fit:contain;margin:0 auto 4px;display:block;">
+                <div class="icon" style="color:black; cursor:pointer;" ondblclick="openWindow('shnailPlatformer', 'Shnail Platformer', '<img src=&quot;https://shnail-boy.github.io/SHNAIL-OS/shnail-plat-icon.png&quot; alt=&quot;&quot; style=&quot;width:16px;height:16px;object-fit:contain;vertical-align:middle;&quot;>')">
+                    <img src="https://shnail-boy.github.io/SHNAIL-OS/shnail-plat-icon.png" alt="" style="width:36px;height:36px;object-fit:contain;margin:0 auto 4px;display:block;">
                     <div style="font-size:11px; color:black;">Shnail Platformer</div>
                 </div>
                 <div class="icon" style="color:black; cursor:pointer;" ondblclick="openWindow('pong', 'Pong', '🏓')">
@@ -1717,7 +2039,13 @@ function openWindow(idPrefix, title, icon, options = {}) {
         initPaintCanvas(winId);
     } else if (idPrefix === 'explorer') {
         initExplorer(winId);
-}
+    } else if (idPrefix === 'recycle') {
+        renderRecycleBin(winId);
+    } else if (idPrefix === 'stopwatch') {
+        initStopwatch(winId);
+    } else if (idPrefix === 'stickyNotes') {
+        document.getElementById(`sticky-note-${winId}`).value = localStorage.getItem("shnail_sticky_note") || "";
+    }
     
 }
 
@@ -1765,6 +2093,78 @@ function resetSettings() {
 }
 
 const musicPlaylists = {};
+window.stopwatchStates = {};
+window.imageViewerUrls = {};
+
+function initStopwatch(winId) {
+    window.stopwatchStates[winId] = { elapsed: 0, startedAt: 0, running: false };
+    updateStopwatch(winId);
+}
+
+function formatStopwatch(milliseconds) {
+    const tenths = Math.floor(milliseconds / 100);
+    const minutes = Math.floor(tenths / 600);
+    const seconds = Math.floor(tenths / 10) % 60;
+    return `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}.${tenths % 10}`;
+}
+
+function updateStopwatch(winId) {
+    const state = window.stopwatchStates[winId];
+    const display = document.getElementById(`stopwatch-display-${winId}`);
+    if (!state || !display) return;
+    const elapsed = state.elapsed + (state.running ? Date.now() - state.startedAt : 0);
+    display.textContent = formatStopwatch(elapsed);
+    const button = display.parentElement.querySelector("button");
+    if (button) button.textContent = state.running ? "Pause" : "Start";
+}
+
+function toggleStopwatch(winId) {
+    const state = window.stopwatchStates[winId];
+    if (!state) return;
+    if (state.running) {
+        state.elapsed += Date.now() - state.startedAt;
+        state.running = false;
+        clearInterval(window.gameIntervals[winId]);
+        delete window.gameIntervals[winId];
+    } else {
+        state.startedAt = Date.now();
+        state.running = true;
+        window.gameIntervals[winId] = setInterval(() => updateStopwatch(winId), 100);
+    }
+    updateStopwatch(winId);
+}
+
+function resetStopwatch(winId) {
+    const state = window.stopwatchStates[winId];
+    if (!state) return;
+    state.elapsed = 0;
+    state.startedAt = state.running ? Date.now() : 0;
+    updateStopwatch(winId);
+}
+
+function saveStickyNote(textarea) {
+    localStorage.setItem("shnail_sticky_note", textarea.value);
+}
+
+function clearStickyNote(winId) {
+    const note = document.getElementById(`sticky-note-${winId}`);
+    if (!note) return;
+    note.value = "";
+    saveStickyNote(note);
+}
+
+function showLocalImage(winId, file) {
+    const preview = document.getElementById(`image-preview-${winId}`);
+    const placeholder = document.getElementById(`image-placeholder-${winId}`);
+    if (!file || !file.type.startsWith("image/") || !preview) return;
+    if (window.imageViewerUrls[winId]) URL.revokeObjectURL(window.imageViewerUrls[winId]);
+    const url = URL.createObjectURL(file);
+    window.imageViewerUrls[winId] = url;
+    preview.onload = () => { preview.style.display = "block"; if (placeholder) placeholder.style.display = "none"; };
+    preview.onerror = () => { preview.style.display = "none"; if (placeholder) { placeholder.textContent = "This image could not be displayed."; placeholder.style.display = "block"; } };
+    preview.src = url;
+}
+
 function loadMusicFiles(winId, files) {
     const playlist = document.getElementById(`music-playlist-${winId}`);
     const audio = document.getElementById(`music-audio-${winId}`);
@@ -2420,7 +2820,9 @@ const desktopApps = {
     myComputer: ['My Computer', '🖥'], browser: ['Internet Explorer', '🌐'], gamesFolder: ['Games', '🎮'],
     notepad: ['Notepad', '📄'], calc: ['Calculator', '🧮'], paint: ['Paint', '🎨'],
     settings: ['Settings', '⚙️'], controlPanel: ['Settings', '⚙️'], recycle: ['Recycle Bin', '🗑️'], terminal: ['Terminal', '💻'],
-    explorer: ['File Explorer', '📁'], calendar: ['Calendar', '📅']
+    explorer: ['File Explorer', '📁'], calendar: ['Calendar', '📅'], music: ['Music Player', '🎵'],
+    stopwatch: ['Stopwatch', '⏱️'], stickyNotes: ['Sticky Notes', '🗒️'], imageViewer: ['Image Viewer', '🖼️'],
+    tetris: ['Tetris', '🧱'], pong: ['Pong', '🏓'], breakout: ['Breakout', '🧱'], spaceInvaders: ['Space Invaders', '👾']
 };
 
 function saveDesktopFolders() {
@@ -2907,13 +3309,9 @@ function runTerminalCommand(event, winId) {
         fileexplorer: ['explorer', 'File Explorer', '📁'],
         explorer: ['explorer', 'File Explorer', '📁'],
         tetris: ['tetris', 'Tetris', '🧱'],
-        pong: ['pong', 'Pong', '🏓'],
         calendar: ['calendar', 'Calendar', '📅'],
         music: ['music', 'Music Player', '🎵'],
         settings: ['settings', 'Settings', '⚙️'],
-        breakout: ['breakout', 'Breakout', '🧱'],
-        invaders: ['spaceInvaders', 'Space Invaders', '👾'],
-        spaceinvaders: ['spaceInvaders', 'Space Invaders', '👾'],
         info: ['systemInfo', 'System Information', 'ℹ️'],
         system: ['systemInfo', 'System Information', 'ℹ️']
     };
@@ -2923,7 +3321,7 @@ function runTerminalCommand(event, winId) {
     if (command === 'clear') {
         output.innerHTML = '';
     } else if (command === 'help') {
-        response = 'Commands: help, about, date, clear, open music/settings/breakout/invaders, games, shnailwashere, tetris, pong, calendar, info';
+        response = 'Commands: help, about, date, clear, open [app], games, shnailwashere, tetris, calendar, info';
     } else if (command.startsWith('open ')) {
         const appName = command.slice(5).trim();
         const app = apps[appName];

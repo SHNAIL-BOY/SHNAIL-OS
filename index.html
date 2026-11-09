@@ -1888,6 +1888,7 @@ function openWindow(idPrefix, title, icon, options = {}) {
                 <section class="settings-panel" data-settings-panel="profile" hidden>
                     <h3>Login personalization</h3>
                     <p>Change the credentials shown on the login screen and the name/avatar for your signed-in profile.</p>
+                    <label><input type="checkbox" id="settings-hide-login-credentials" ${localStorage.getItem('shnail_hide_login_credentials') === 'true' ? 'checked' : ''}> Hide login credentials on the login screen</label>
                     <label>Login username <input id="settings-login-username" maxlength="32" value="${escapeHTML(localStorage.getItem('shnail_login_username') || 'shnail')}"></label>
                     <label>Login password <input id="settings-login-password" type="text" maxlength="64" value="${escapeHTML(localStorage.getItem('shnail_login_password') || '4746')}"></label>
                     <label>Display name <input id="settings-display-name" maxlength="24" value="${escapeHTML(localStorage.getItem('shnail_display_name') || '')}"></label>
@@ -2425,6 +2426,8 @@ function updateLoginCredentialsHint() {
     if (!hint) return;
     const username = localStorage.getItem("shnail_login_username") || "shnail";
     const password = localStorage.getItem("shnail_login_password") || "4746";
+    const hidden = localStorage.getItem("shnail_hide_login_credentials") === "true";
+    hint.style.display = hidden ? "none" : "block";
     hint.innerHTML = `Username: ${escapeHTML(username)}<br>Password: ${escapeHTML(password)}`;
 }
 
@@ -2433,11 +2436,13 @@ function savePersonalization() {
     const avatar = document.getElementById("settings-avatar").value || "🐌";
     const usernameInput = document.getElementById("settings-login-username");
     const passwordInput = document.getElementById("settings-login-password");
+    const hideCredentialsInput = document.getElementById("settings-hide-login-credentials");
     const username = usernameInput.value.trim();
     const password = passwordInput.value;
     if (!username || !password) return alert("Login username and password cannot be empty.");
     localStorage.setItem("shnail_login_username", username);
     localStorage.setItem("shnail_login_password", password);
+    localStorage.setItem("shnail_hide_login_credentials", hideCredentialsInput && hideCredentialsInput.checked ? "true" : "false");
     localStorage.setItem("shnail_display_name", name);
     localStorage.setItem("shnail_avatar", avatar);
     currentUser = `${avatar} ${name}`;
@@ -4251,6 +4256,7 @@ resetSettings = function() {
     osConfirm("Restore the default profile and desktop wallpaper?", () => {
         localStorage.setItem("shnail_login_username", "shnail");
         localStorage.setItem("shnail_login_password", "4746");
+        localStorage.setItem("shnail_hide_login_credentials", "false");
         localStorage.setItem("shnail_display_name", "shnail");
         localStorage.setItem("shnail_avatar", "🐌");
         currentUser = "🐌 shnail";
@@ -4259,6 +4265,8 @@ resetSettings = function() {
         const passwordInput = document.getElementById("settings-login-password");
         if (usernameInput) usernameInput.value = "shnail";
         if (passwordInput) passwordInput.value = "4746";
+        const hideCredentialsInput = document.getElementById("settings-hide-login-credentials");
+        if (hideCredentialsInput) hideCredentialsInput.checked = false;
         setDesktopColor("#008080");
         clockTimeZone = defaultTimeZone;
         clockFormat = "12";

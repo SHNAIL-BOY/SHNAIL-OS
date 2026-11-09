@@ -403,6 +403,48 @@ body {
     object-fit:contain;
 }
 
+#saverText{
+    position:absolute;
+    font:bold 42px Arial,sans-serif;
+    color:white;
+    white-space:nowrap;
+    text-shadow:2px 2px #000;
+}
+
+.saver-preview{
+    position:relative;
+    height:170px;
+    overflow:hidden;
+    border:2px inset #808080;
+    margin:10px 0;
+    background:#000;
+}
+.saver-preview-logo{
+    position:absolute;
+    left:8px;
+    top:8px;
+    width:100px;
+    height:100px;
+    object-fit:contain;
+    animation:saverPreviewBounce 5s linear infinite alternate;
+}
+.saver-preview-text{
+    position:absolute;
+    left:8px;
+    top:52px;
+    font:bold 25px Arial,sans-serif;
+    white-space:nowrap;
+    text-shadow:1px 1px #000;
+    animation:saverPreviewBounce 5s linear infinite alternate;
+}
+@keyframes saverPreviewBounce{
+    0%{transform:translate(0,0)}
+    25%{transform:translate(210px,0)}
+    50%{transform:translate(210px,65px)}
+    75%{transform:translate(0,65px)}
+    100%{transform:translate(0,0)}
+}
+
 #contextMenu{
     position:absolute;
     display:none;
@@ -819,7 +861,7 @@ body {
 </div>
     
 <div id="loginScreen" style="display:none;">
-    <div style="position:absolute;top:16px;left:16px;color:white;font:14px Arial,sans-serif;text-shadow:1px 1px #000;">
+    <div id="loginCredentialsHint" style="position:absolute;top:16px;left:16px;color:white;font:14px Arial,sans-serif;text-shadow:1px 1px #000;">
         Username: shnail<br>Password: 4746
     </div>
     <div class="loginBox">
@@ -858,6 +900,7 @@ body {
     
 <div id="screensaver">
     <img id="logo" src="https://shnail-boy.github.io/SHNAIL-OS/SHNAIL-OS-LOGO.png" alt="SHNAIL-OS logo">
+    <div id="saverText" style="display:none;">SHNAIL-OS</div>
 </div>
 
 <div id="desktop">
@@ -989,6 +1032,7 @@ body {
 
 <script>
 let highestZIndex = 10;
+const PACMAN_ICON = '<img src="https://shnail-boy.github.io/SHNAIL-OS/pac-man-icon.png" alt="" style="width:16px;height:16px;object-fit:contain;vertical-align:middle;">';
 const windowsRegistry = {
     'window-welcome': { title: 'Welcome', icon: '<img src="https://shnail-boy.github.io/SHNAIL-OS/SHNAIL-OS-LOGO.png" alt="" style="width:16px;height:16px;object-fit:contain;vertical-align:middle;">' }
 };
@@ -1061,8 +1105,9 @@ function login() {
         return;
     }
 
-    // Default account
-    if (username === "shnail" && password === "4746") {
+    const savedUsername = localStorage.getItem("shnail_login_username") || "shnail";
+    const savedPassword = localStorage.getItem("shnail_login_password") || "4746";
+    if (username === savedUsername && password === savedPassword) {
         const displayName = localStorage.getItem("shnail_display_name") || username;
         const avatar = localStorage.getItem("shnail_avatar") || "🐌";
         currentUser = `${avatar} ${displayName}`;
@@ -1800,6 +1845,7 @@ function openWindow(idPrefix, title, icon, options = {}) {
             <div class="settings-app" id="settings-app-${winId}">
                 <div class="settings-tabs" role="tablist" aria-label="Settings sections">
                     <button class="settings-tab active" role="tab" aria-selected="true" onclick="settingsTab('${winId}','wallpaper')">Wallpaper</button>
+                    <button class="settings-tab" role="tab" aria-selected="false" onclick="settingsTab('${winId}','screensaver')">Screen Saver</button>
                     <button class="settings-tab" role="tab" aria-selected="false" onclick="settingsTab('${winId}','profile')">Profile</button>
                     <button class="settings-tab" role="tab" aria-selected="false" onclick="settingsTab('${winId}','date & time')">Date &amp; Time</button>
                     <button class="settings-tab" role="tab" aria-selected="false" onclick="settingsTab('${winId}','other')">Other</button>
@@ -1814,9 +1860,36 @@ function openWindow(idPrefix, title, icon, options = {}) {
                     <label>Background image <input type="file" accept="image/*" onchange="loadWallpaperImage(event)"></label>
                     <button onclick="clearWallpaperImage()">Remove image</button>
                 </section>
+                <section class="settings-panel" data-settings-panel="screensaver" hidden>
+                    <h3>Screen saver</h3>
+                    <p>Customise the bouncing logo and background. Changes appear in the preview.</p>
+                    <div class="saver-preview" id="saver-preview-${winId}">
+                        <img class="saver-preview-logo" id="saver-preview-image-${winId}" src="https://shnail-boy.github.io/SHNAIL-OS/SHNAIL-OS-LOGO.png" alt="Preview logo">
+                        <div class="saver-preview-text" id="saver-preview-text-${winId}" style="display:none;">SHNAIL-OS</div>
+                    </div>
+                    <label>Background colour <input type="color" id="saver-bg-${winId}" value="#000000" oninput="updateScreenSaverPreview('${winId}')"></label>
+                    <label>Bouncing logo
+                        <select id="saver-mode-${winId}" onchange="updateScreenSaverPreview('${winId}')">
+                            <option value="image">Default / uploaded image</option>
+                            <option value="text">Custom text</option>
+                            <option value="none">No logo</option>
+                        </select>
+                    </label>
+                    <div id="saver-image-options-${winId}">
+                        <label>Upload your own image <input type="file" id="saver-upload-${winId}" accept="image/*" onchange="loadScreenSaverImage(event,'${winId}')"></label>
+                        <button type="button" onclick="removeScreenSaverImage('${winId}')">Use default logo</button>
+                    </div>
+                    <div id="saver-text-options-${winId}" hidden>
+                        <label>Text <input type="text" id="saver-label-${winId}" maxlength="40" value="SHNAIL-OS" oninput="updateScreenSaverPreview('${winId}')"></label>
+                        <label>Text colour <input type="color" id="saver-text-color-${winId}" value="#ffffff" oninput="updateScreenSaverPreview('${winId}')"></label>
+                    </div>
+                    <button type="button" onclick="saveScreenSaverSettings('${winId}')">Save screen saver</button>
+                </section>
                 <section class="settings-panel" data-settings-panel="profile" hidden>
                     <h3>Login personalization</h3>
-                    <p>Choose the name and avatar shown for your signed-in profile.</p>
+                    <p>Change the credentials shown on the login screen and the name/avatar for your signed-in profile.</p>
+                    <label>Login username <input id="settings-login-username" maxlength="32" value="${escapeHTML(localStorage.getItem('shnail_login_username') || 'shnail')}"></label>
+                    <label>Login password <input id="settings-login-password" type="text" maxlength="64" value="${escapeHTML(localStorage.getItem('shnail_login_password') || '4746')}"></label>
                     <label>Display name <input id="settings-display-name" maxlength="24" value="${escapeHTML(localStorage.getItem('shnail_display_name') || '')}"></label>
                     <label>Avatar <select id="settings-avatar">${['🐌','🐱','🐸','🐧','🦊','🤖','🌟'].map(avatar => `<option ${localStorage.getItem('shnail_avatar') === avatar ? 'selected' : ''}>${avatar}</option>`).join('')}</select></label>
                     <button onclick="savePersonalization()">Save profile</button>
@@ -1988,10 +2061,6 @@ function openWindow(idPrefix, title, icon, options = {}) {
                     <span style="font-size:28px;">💣 </span>
                     <div style="font-size:11px; color:black;">Minesweeper</div>
                 </div>
-                <div class="icon" style="color:black; cursor:pointer;" ondblclick="openWindow('shnailPlatformer', 'Shnail Platformer', '<img src=&quot;https://shnail-boy.github.io/SHNAIL-OS/shnail-plat-icon.png&quot; alt=&quot;&quot; style=&quot;width:16px;height:16px;object-fit:contain;vertical-align:middle;&quot;>')">
-                    <img src="https://shnail-boy.github.io/SHNAIL-OS/shnail-plat-icon.png" alt="" style="width:36px;height:36px;object-fit:contain;margin:0 auto 4px;display:block;">
-                    <div style="font-size:11px; color:black;">Shnail Platformer</div>
-                </div>
                 <div class="icon" style="color:black; cursor:pointer;" ondblclick="openWindow('pong', 'Pong', '🏓')">
                     <span style="font-size:28px;">🏓</span>
                     <div style="font-size:11px; color:black;">Pong</div>
@@ -2004,11 +2073,11 @@ function openWindow(idPrefix, title, icon, options = {}) {
                     <span style="font-size:28px;">👾</span>
                     <div style="font-size:11px; color:black;">Space Invaders</div>
                 </div>
+                <div class="icon" style="color:black; cursor:pointer;" ondblclick="openWindow('pacman', 'Pac-Man', PACMAN_ICON)">
+                    <span><img src="https://shnail-boy.github.io/SHNAIL-OS/pac-man-icon.png" alt="" style="width:32px;height:32px;object-fit:contain;"></span>
+                    <div style="font-size:11px; color:black;">Pac-Man</div>
+                </div>
             </div>
-        `;
-    } else if (idPrefix === 'shnailPlatformer') {
-        contentHTML = `
-            <iframe src="https://shnail-boy.github.io/SHNAIL-OS/shnail-plat.html" title="Shnail Platformer" style="width:100%;height:100%;border:0;display:block;"></iframe>
         `;
     } else if (idPrefix === 'snake') {
         contentHTML = `
@@ -2124,6 +2193,14 @@ function openWindow(idPrefix, title, icon, options = {}) {
         contentHTML = `<div class="game-container" id="breakout-box-${winId}" tabindex="0" onclick="this.focus()"><div>Breakout — ← → or A/D</div><canvas class="game-canvas" id="breakout-canvas-${winId}" width="480" height="320"></canvas></div>`;
     } else if (idPrefix === 'spaceInvaders') {
         contentHTML = `<div class="game-container" id="spaceInvaders-box-${winId}" tabindex="0" onclick="this.focus()"><div>Space Invaders — ← → move • Space shoot</div><canvas class="game-canvas" id="invaders-canvas-${winId}" width="480" height="320"></canvas></div>`;
+    } else if (idPrefix === 'pacman') {
+        contentHTML = `
+            <div class="game-container" id="pacman-box-${winId}" tabindex="0" onclick="this.focus()" style="gap:6px;padding:8px;">
+                <div style="font-size:12px;">PAC-MAN &nbsp; Score: <span id="pacman-score-${winId}">0</span> &nbsp; Lives: <span id="pacman-lives-${winId}">3</span></div>
+                <canvas id="pacman-canvas-${winId}" width="414" height="396" style="display:block;width:min(100%,414px);height:auto;image-rendering:pixelated;border:2px solid #174bff;background:#000;"></canvas>
+                <div style="font-size:10px;color:#aaa;">ARROWS / WASD to move • SPACE to pause • Eat big dots to scare ghosts</div>
+            </div>
+        `;
     } else if (idPrefix === 'calendar') {
         contentHTML = `<div id="calendar-app-${winId}" style="text-align:center;"></div>`;
     } else if (idPrefix === 'systemInfo') {
@@ -2144,9 +2221,6 @@ function openWindow(idPrefix, title, icon, options = {}) {
     if (idPrefix === 'browser') {
         win.style.width = "600px";
         win.style.height = "420px";
-    } else if (idPrefix === 'shnailPlatformer') {
-        win.style.width = "800px";
-        win.style.height = "600px";
     } else if (idPrefix === 'tetris') {
         win.style.width = "440px";
         win.style.height = "580px";
@@ -2156,6 +2230,9 @@ function openWindow(idPrefix, title, icon, options = {}) {
     } else if (idPrefix === 'breakout' || idPrefix === 'spaceInvaders') {
         win.style.width = "520px";
         win.style.height = "400px";
+    } else if (idPrefix === 'pacman') {
+        win.style.width = "465px";
+        win.style.height = "535px";
     }
     win.innerHTML = `
         <div class="titlebar">
@@ -2166,11 +2243,20 @@ function openWindow(idPrefix, title, icon, options = {}) {
                 <button onclick="event.stopPropagation(); closeWindow('${winId}')">X</button>
             </div>
         </div>
-        <div class="content" style="${['snake', 'shnailPlatformer', 'tetris', 'pong', 'breakout', 'spaceInvaders'].includes(idPrefix) ? 'padding:0; overflow:hidden;' : ''}">${contentHTML}</div>
+        <div class="content" style="${['snake', 'tetris', 'pong', 'breakout', 'spaceInvaders', 'pacman'].includes(idPrefix) ? 'padding:0; overflow:hidden;' : ''}">${contentHTML}</div>
     `;
 
     win.onmousedown = () => focusWindow(winId);
     document.getElementById("desktop").appendChild(win);
+    if (idPrefix === 'settings') {
+        const savedSaver = getScreenSaverSettings();
+        const field = id => document.getElementById(`${id}-${winId}`);
+        field('saver-bg').value = savedSaver.background;
+        field('saver-mode').value = savedSaver.mode;
+        field('saver-label').value = savedSaver.text;
+        field('saver-text-color').value = savedSaver.textColor;
+        updateScreenSaverPreview(winId);
+    }
     
     makeDraggable(win);
     setupTaskbarItem(winId, title, icon);
@@ -2197,6 +2283,8 @@ function openWindow(idPrefix, title, icon, options = {}) {
         initBreakoutGame(winId);
     } else if (idPrefix === 'spaceInvaders') {
         initSpaceInvadersGame(winId);
+    } else if (idPrefix === 'pacman') {
+        initPacmanGame(winId);
     } else if (idPrefix === 'tictactoe') {
         initTicTacToeState(winId);
     } else if (idPrefix === 'calendar') {
@@ -2227,11 +2315,103 @@ function setDesktopColor(color) {
     localStorage.removeItem("shnail_wallpaper_image");
 }
 
+const DEFAULT_SAVER_IMAGE = "https://shnail-boy.github.io/SHNAIL-OS/SHNAIL-OS-LOGO.png";
+
+function getScreenSaverSettings() {
+    try {
+        return Object.assign({ background: "#000000", mode: "image", text: "SHNAIL-OS", textColor: "#ffffff", image: "" }, JSON.parse(localStorage.getItem("shnail_screensaver_settings") || "{}"));
+    } catch {
+        return { background: "#000000", mode: "image", text: "SHNAIL-OS", textColor: "#ffffff", image: "" };
+    }
+}
+
+function updateScreenSaverPreview(winId) {
+    const get = id => document.getElementById(`${id}-${winId}`);
+    const preview = get("saver-preview");
+    const mode = get("saver-mode").value;
+    const imageOptions = get("saver-image-options");
+    const textOptions = get("saver-text-options");
+    const previewImage = get("saver-preview-image");
+    const previewText = get("saver-preview-text");
+    preview.style.background = get("saver-bg").value;
+    imageOptions.hidden = mode !== "image";
+    textOptions.hidden = mode !== "text";
+    previewImage.style.display = mode === "image" ? "block" : "none";
+    previewText.style.display = mode === "text" ? "block" : "none";
+    previewText.textContent = get("saver-label").value || " ";
+    previewText.style.color = get("saver-text-color").value;
+    const settings = getScreenSaverSettings();
+    previewImage.src = settings.image || DEFAULT_SAVER_IMAGE;
+}
+
+function loadScreenSaverImage(event, winId) {
+    const file = event.target.files && event.target.files[0];
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+        alert("Please choose an image file.");
+        event.target.value = "";
+        return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => {
+        try {
+            const settings = getScreenSaverSettings();
+            settings.image = reader.result;
+            localStorage.setItem("shnail_screensaver_settings", JSON.stringify(settings));
+            updateScreenSaverPreview(winId);
+        } catch {
+            alert("That image is too large to save in this browser. Try a smaller image.");
+        }
+    };
+    reader.readAsDataURL(file);
+}
+
+function removeScreenSaverImage(winId) {
+    const settings = getScreenSaverSettings();
+    settings.image = "";
+    localStorage.setItem("shnail_screensaver_settings", JSON.stringify(settings));
+    const upload = document.getElementById(`saver-upload-${winId}`);
+    if (upload) upload.value = "";
+    updateScreenSaverPreview(winId);
+}
+
+function saveScreenSaverSettings(winId) {
+    const get = id => document.getElementById(`${id}-${winId}`);
+    const settings = {
+        background: get("saver-bg").value,
+        mode: get("saver-mode").value,
+        text: get("saver-label").value || "SHNAIL-OS",
+        textColor: get("saver-text-color").value,
+        image: getScreenSaverSettings().image || ""
+    };
+    try {
+        localStorage.setItem("shnail_screensaver_settings", JSON.stringify(settings));
+        applyScreenSaverSettings();
+        alert("Screen saver settings saved.");
+    } catch {
+        alert("Could not save these settings. The uploaded image may be too large.");
+    }
+}
+
+function applyScreenSaverSettings() {
+    const settings = getScreenSaverSettings();
+    const saverElement = document.getElementById("screensaver");
+    const image = document.getElementById("logo");
+    const text = document.getElementById("saverText");
+    if (!saverElement || !image || !text) return;
+    saverElement.style.background = settings.background;
+    image.src = settings.image || DEFAULT_SAVER_IMAGE;
+    image.style.display = settings.mode === "image" ? "block" : "none";
+    text.textContent = settings.text || "SHNAIL-OS";
+    text.style.color = settings.textColor || "#ffffff";
+    text.style.display = settings.mode === "text" ? "block" : "none";
+}
+
 function settingsTab(winId, selectedTab) {
     const app = document.getElementById(`settings-app-${winId}`);
     if (!app) return;
     app.querySelectorAll(".settings-tab").forEach(tab => {
-        const active = tab.textContent.trim().toLowerCase() === selectedTab;
+        const active = tab.textContent.trim().toLowerCase().replace(/\s+/g, "") === selectedTab.toLowerCase().replace(/\s+/g, "");
         tab.classList.toggle("active", active);
         tab.setAttribute("aria-selected", active);
     });
@@ -2240,13 +2420,29 @@ function settingsTab(winId, selectedTab) {
     });
 }
 
+function updateLoginCredentialsHint() {
+    const hint = document.getElementById("loginCredentialsHint");
+    if (!hint) return;
+    const username = localStorage.getItem("shnail_login_username") || "shnail";
+    const password = localStorage.getItem("shnail_login_password") || "4746";
+    hint.innerHTML = `Username: ${escapeHTML(username)}<br>Password: ${escapeHTML(password)}`;
+}
+
 function savePersonalization() {
     const name = document.getElementById("settings-display-name").value.trim().slice(0, 24) || "shnail";
     const avatar = document.getElementById("settings-avatar").value || "🐌";
+    const usernameInput = document.getElementById("settings-login-username");
+    const passwordInput = document.getElementById("settings-login-password");
+    const username = usernameInput.value.trim();
+    const password = passwordInput.value;
+    if (!username || !password) return alert("Login username and password cannot be empty.");
+    localStorage.setItem("shnail_login_username", username);
+    localStorage.setItem("shnail_login_password", password);
     localStorage.setItem("shnail_display_name", name);
     localStorage.setItem("shnail_avatar", avatar);
     currentUser = `${avatar} ${name}`;
-    alert("Profile saved.");
+    updateLoginCredentialsHint();
+    alert("Profile and login credentials saved.");
 }
 
 function resetSettings() {
@@ -2458,6 +2654,254 @@ function initSpaceInvadersGame(winId) {
         }
     }, 40);
     box.focus(); draw();
+}
+
+// --- PAC-MAN GAME ---
+function initPacmanGame(winId) {
+    const canvas = document.getElementById(`pacman-canvas-${winId}`);
+    const box = document.getElementById(`pacman-box-${winId}`);
+    const scoreEl = document.getElementById(`pacman-score-${winId}`);
+    const livesEl = document.getElementById(`pacman-lives-${winId}`);
+    if (!canvas || !box || !scoreEl || !livesEl) return;
+
+    const ctx = canvas.getContext("2d");
+    const tile = 24;
+    const map = [
+        "###############",
+        "#o...........o#",
+        "#.###.###.###.#",
+        "#.............#",
+        "#.###.#.#.###.#",
+        "#...#...#...#.#",
+        "###.###d##.####",
+        "#....#hhh#....#",
+        "#.#.#####.#.#.#",
+        "#.#...#...#...#",
+        "#.###.#.#.###.#",
+        "#.............#",
+        "#.###.###.###.#",
+        "#o...........o#",
+        "###############"
+    ].map(row => row.split(""));
+    const player = { x: 1, y: 1, previousX: 1, previousY: 1, direction: { x: 0, y: 0 }, queued: { x: 1, y: 0 } };
+    const ghosts = [
+        { x: 6, y: 7, spawnX: 6, spawnY: 7, color: "#ff4b8b" },
+        { x: 8, y: 7, spawnX: 8, spawnY: 7, color: "#31d9ff" }
+    ];
+    let score = 0;
+    let lives = 3;
+    let remaining = 0;
+    let tickCount = 0;
+    let powerUntil = 0;
+    let ghostBonus = 200;
+    let movementProgress = 0;
+    let lastFrameTime = performance.now();
+    let ended = false;
+    let waitingForInput = false;
+
+    map.forEach(row => row.forEach(cell => { if (cell === "." || cell === "o") remaining++; }));
+
+    function isOpen(x, y, isGhost = false) {
+        const cell = map[y] && map[y][x];
+        return cell !== undefined && cell !== "#" && (isGhost || (cell !== "h" && cell !== "d"));
+    }
+
+    function draw() {
+        ctx.fillStyle = "#000";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        map.forEach((row, y) => row.forEach((cell, x) => {
+            if (cell === "#") {
+                ctx.fillStyle = "#173cff";
+                ctx.fillRect(x * tile, y * tile, tile, tile);
+            } else if (cell === "h") {
+                ctx.fillStyle = "#33284f";
+                ctx.fillRect(x * tile, y * tile, tile, tile);
+                ctx.strokeStyle = "#8b72c7";
+                ctx.strokeRect(x * tile + 2, y * tile + 2, tile - 4, tile - 4);
+            } else if (cell === "d") {
+                ctx.fillStyle = "#ff8bd1";
+                ctx.fillRect(x * tile + 2, y * tile + 9, tile - 4, 3);
+                ctx.fillRect(x * tile + 2, y * tile + 15, tile - 4, 3);
+            } else if (cell === "." || cell === "o") {
+                ctx.fillStyle = "#ffe6a6";
+                ctx.beginPath();
+                ctx.arc(x * tile + tile / 2, y * tile + tile / 2, cell === "o" ? 6 : 2, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }));
+
+        const progress = movementProgress / 150;
+        const playerX = player.previousX + (player.x - player.previousX) * progress;
+        const playerY = player.previousY + (player.y - player.previousY) * progress;
+        const centerX = playerX * tile + tile / 2;
+        const centerY = playerY * tile + tile / 2;
+        const facing = player.direction.x || player.direction.y ? player.direction : player.queued;
+        const angle = Math.atan2(facing.y, facing.x);
+        ctx.save();
+        ctx.translate(centerX, centerY);
+        ctx.rotate(angle);
+        ctx.fillStyle = "#ffeb00";
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        const mouth = .08 + .22 * Math.abs(Math.sin(performance.now() / 100));
+        ctx.arc(0, 0, tile * .42, mouth, Math.PI * 2 - mouth);
+        ctx.closePath();
+        ctx.fill();
+        ctx.restore();
+
+        ghosts.forEach(ghost => {
+            if (ghost.reviveAt > tickCount) return;
+            const gx = ghost.x * tile, gy = ghost.y * tile;
+            ctx.fillStyle = tickCount < powerUntil ? "#245bff" : ghost.color;
+            ctx.beginPath();
+            ctx.arc(gx + tile / 2, gy + tile / 2, tile * .4, Math.PI, 0);
+            ctx.lineTo(gx + tile * .9, gy + tile * .9);
+            ctx.lineTo(gx + tile * .68, gy + tile * .75);
+            ctx.lineTo(gx + tile / 2, gy + tile * .9);
+            ctx.lineTo(gx + tile * .32, gy + tile * .75);
+            ctx.lineTo(gx + tile * .1, gy + tile * .9);
+            ctx.closePath();
+            ctx.fill();
+            ctx.fillStyle = "white";
+            ctx.beginPath();
+            ctx.arc(gx + tile * .38, gy + tile * .43, 3, 0, Math.PI * 2);
+            ctx.arc(gx + tile * .64, gy + tile * .43, 3, 0, Math.PI * 2);
+            ctx.fill();
+        });
+    }
+
+    function finish(message) {
+        if (ended) return;
+        ended = true;
+        clearInterval(window.gameIntervals[winId]);
+        delete window.gameIntervals[winId];
+        showGameOver(winId, message, "pacman", "Pac-Man", PACMAN_ICON);
+    }
+
+    function moveGhost(ghost) {
+        const directions = [{ x: 1, y: 0 }, { x: -1, y: 0 }, { x: 0, y: 1 }, { x: 0, y: -1 }];
+        let choices = directions.filter(direction => isOpen(ghost.x + direction.x, ghost.y + direction.y, true));
+        if (!choices.length) return;
+        const nonReverse = choices.filter(direction => direction.x !== -ghost.directionX || direction.y !== -ghost.directionY);
+        if (nonReverse.length) choices = nonReverse;
+        choices.sort((a, b) => {
+            const distanceA = Math.abs(ghost.x + a.x - player.x) + Math.abs(ghost.y + a.y - player.y);
+            const distanceB = Math.abs(ghost.x + b.x - player.x) + Math.abs(ghost.y + b.y - player.y);
+            return tickCount < powerUntil ? distanceB - distanceA : distanceA - distanceB;
+        });
+        const bestDistance = Math.abs(ghost.x + choices[0].x - player.x) + Math.abs(ghost.y + choices[0].y - player.y);
+        const best = choices.filter(direction => Math.abs(ghost.x + direction.x - player.x) + Math.abs(ghost.y + direction.y - player.y) === bestDistance);
+        const direction = best[Math.floor(Math.random() * best.length)];
+        if (direction) {
+            ghost.x += direction.x;
+            ghost.y += direction.y;
+            ghost.directionX = direction.x;
+            ghost.directionY = direction.y;
+        }
+    }
+
+    function checkGhostCollisions() {
+        for (const ghost of ghosts) {
+            if (ghost.reviveAt > tickCount || ghost.x !== player.x || ghost.y !== player.y) continue;
+            if (tickCount < powerUntil) {
+                score += ghostBonus;
+                ghostBonus *= 2;
+                scoreEl.textContent = score;
+                ghost.x = ghost.spawnX;
+                ghost.y = ghost.spawnY;
+                ghost.reviveAt = tickCount + 20;
+            } else {
+                livesEl.textContent = --lives;
+                if (!lives) {
+                    finish(`A ghost got you! Score: ${score}`);
+                } else {
+                    player.x = player.previousX = 1;
+                    player.y = player.previousY = 1;
+                    player.direction = { x: 0, y: 0 };
+                    player.queued = { x: 1, y: 0 };
+                    ghosts.forEach(g => {
+                        g.x = g.spawnX;
+                        g.y = g.spawnY;
+                        g.directionX = g.directionY = 0;
+                        g.reviveAt = 0;
+                    });
+                    powerUntil = 0;
+                    movementProgress = 0;
+                    waitingForInput = true;
+                }
+                return true;
+            }
+        }
+        return false;
+    }
+
+    function advancePlayer() {
+        tickCount++;
+        if (isOpen(player.x + player.queued.x, player.y + player.queued.y)) {
+            player.direction = { ...player.queued };
+        }
+
+        player.previousX = player.x;
+        player.previousY = player.y;
+        if (isOpen(player.x + player.direction.x, player.y + player.direction.y)) {
+            player.x += player.direction.x;
+            player.y += player.direction.y;
+        }
+
+        const cell = map[player.y][player.x];
+        if (cell === "." || cell === "o") {
+            map[player.y][player.x] = " ";
+            remaining--;
+            score += cell === "o" ? 50 : 10;
+            if (cell === "o") {
+                powerUntil = tickCount + 55;
+                ghostBonus = 200;
+            }
+            scoreEl.textContent = score;
+        }
+        if (checkGhostCollisions()) return false;
+        if (remaining === 0) {
+            finish(`You cleared the maze! Score: ${score}`);
+            return false;
+        }
+
+        if (tickCount % 2 === 0) {
+            ghosts.forEach(ghost => { if (!(ghost.reviveAt > tickCount)) moveGhost(ghost); });
+            if (checkGhostCollisions()) return false;
+        }
+        return true;
+    }
+
+    function step() {
+        if (ended) return;
+        const now = performance.now();
+        if (!waitingForInput) movementProgress += Math.min(now - lastFrameTime, 50);
+        lastFrameTime = now;
+
+        while (movementProgress >= 150 && !ended && !waitingForInput) {
+            movementProgress -= 150;
+            if (!advancePlayer()) break;
+        }
+        draw();
+    }
+
+    const keyDirections = {
+        ArrowLeft: { x: -1, y: 0 }, a: { x: -1, y: 0 },
+        ArrowRight: { x: 1, y: 0 }, d: { x: 1, y: 0 },
+        ArrowUp: { x: 0, y: -1 }, w: { x: 0, y: -1 },
+        ArrowDown: { x: 0, y: 1 }, s: { x: 0, y: 1 }
+    };
+    box.addEventListener("keydown", event => {
+        const direction = keyDirections[event.key] || keyDirections[event.key.toLowerCase()];
+        if (!direction) return;
+        event.preventDefault();
+        player.queued = direction;
+        waitingForInput = false;
+    });
+
+    draw();
+    box.focus();
+    window.gameIntervals[winId] = setInterval(step, 16);
 }
 
 // --- CALENDAR ---
@@ -2923,6 +3367,8 @@ function calcCompute(winId) {
 // ===== Screen Saver =====
 const saver = document.getElementById("screensaver");
 const logo = document.getElementById("logo");
+const saverText = document.getElementById("saverText");
+applyScreenSaverSettings();
 
 let idleTimer;
 let saverRunning = false;
@@ -2954,14 +3400,17 @@ setInterval(() => {
     x += dx;
     y += dy;
 
-    const w = logo.offsetWidth;
-    const h = logo.offsetHeight;
+    const settings = getScreenSaverSettings();
+    const movingLogo = settings.mode === "text" ? saverText : logo;
+    if (settings.mode === "none") return;
+    const w = movingLogo.offsetWidth;
+    const h = movingLogo.offsetHeight;
 
     if (x <= 0 || x + w >= window.innerWidth) dx *= -1;
     if (y <= 0 || y + h >= window.innerHeight) dy *= -1;
 
-    logo.style.left = x + "px";
-    logo.style.top = y + "px";
+    movingLogo.style.left = x + "px";
+    movingLogo.style.top = y + "px";
 }, 16);
 
 ["mousemove","mousedown","keydown","touchstart"].forEach(event =>
@@ -2975,6 +3424,8 @@ const contextMenu = document.getElementById("contextMenu");
 function escapeHTML(value) {
     return String(value).replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]));
 }
+
+updateLoginCredentialsHint();
 
 let desktopFolders = [];
 let desktopAppFolders = {};
@@ -3798,9 +4249,16 @@ showFolderMenu = function(folderName, x, y) {
 
 resetSettings = function() {
     osConfirm("Restore the default profile and desktop wallpaper?", () => {
+        localStorage.setItem("shnail_login_username", "shnail");
+        localStorage.setItem("shnail_login_password", "4746");
         localStorage.setItem("shnail_display_name", "shnail");
         localStorage.setItem("shnail_avatar", "🐌");
         currentUser = "🐌 shnail";
+        updateLoginCredentialsHint();
+        const usernameInput = document.getElementById("settings-login-username");
+        const passwordInput = document.getElementById("settings-login-password");
+        if (usernameInput) usernameInput.value = "shnail";
+        if (passwordInput) passwordInput.value = "4746";
         setDesktopColor("#008080");
         clockTimeZone = defaultTimeZone;
         clockFormat = "12";
@@ -3818,6 +4276,493 @@ resetSettings = function() {
         if (avatarSelect) avatarSelect.value = "🐌";
     });
 };
+
+// --- PAC-MAN: classic-style maze, buffered controls, ghost AI and collision handling ---
+function initPacmanGame(winId) {
+    const canvas = document.getElementById(`pacman-canvas-${winId}`);
+    const box = document.getElementById(`pacman-box-${winId}`);
+    const scoreEl = document.getElementById(`pacman-score-${winId}`);
+    const livesEl = document.getElementById(`pacman-lives-${winId}`);
+    if (!canvas || !box || !scoreEl || !livesEl) return;
+
+    const ctx = canvas.getContext("2d");
+    const TILE = 18;
+    const rawMaze = [
+        "#######################",
+        "#o........#..........o#",
+        "#.###.###.#.###.###.#.#",
+        "#.###.###.#.###.###.#.#",
+        "#.....................#",
+        "#.###.#.#######.#.###.#",
+        "#.....#...###...#.....#",
+        "#####.###.###.###.#####",
+        "    #.#...###...#.#    ",
+         "#####.#.##   ##.#.#####",
+        " ..................... ",
+        "#####.#.##   ##.#.#####",
+        "    #.#...###...#.#    ",
+        "#####.#.#######.#.#####",
+        "#.........#...........#",
+        "#.###.###.#.#.###.###.#",
+        "#o..#.....#.....#....o#",
+        "###.#.#.#####.#.#.###.#",
+        "#...#.#...#...#.#.....#",
+        "#.###.###.#.###.###.#.#",
+        "#.....................#",
+        "#######################"
+    ];
+    // Keep every row the same width; the side openings on the tunnel row wrap around.
+    const width = 23, height = rawMaze.length;
+    const maze = rawMaze.map(row => row.padEnd(width, "#").slice(0, width).split(""));
+    const originalMaze = maze.map(row => row.slice());
+    canvas.width = width * TILE;
+    canvas.height = height * TILE;
+
+    const playerStart = { x: 1, y: 1 };
+    const ghostStarts = [
+        { x: 10, y: 10, color: "#ff4b8b", name: "Blinky" },
+        { x: 11, y: 10, color: "#31d9ff", name: "Inky" },
+        { x: 10, y: 11, color: "#ffb8ff", name: "Pinky" },
+        { x: 12, y: 11, color: "#ffb852", name: "Clyde" }
+    ];
+    const dirs = [
+        { x: 0, y: -1, key: "up" },
+        { x: -1, y: 0, key: "left" },
+        { x: 0, y: 1, key: "down" },
+        { x: 1, y: 0, key: "right" }
+    ];
+    const player = {
+        x: playerStart.x, y: playerStart.y,
+        fromX: playerStart.x, fromY: playerStart.y,
+        dir: { x: 0, y: 0 }, wanted: { x: 1, y: 0 }
+    };
+    let ghosts = [];
+    function resetGhosts() {
+        ghosts = ghostStarts.map((g, i) => ({
+            ...g, homeX: g.x, homeY: g.y, fromX: g.x, fromY: g.y,
+            dir: { x: 0, y: i % 2 ? -1 : 1 },
+            releaseAt: i * 12, eaten: false
+        }));
+    }
+    resetGhosts();
+
+    let score = 0, lives = 3, pellets = 0, tick = 0;
+    let powerUntil = 0, ghostCombo = 200;
+    let accumulator = 0, lastTime = performance.now();
+    let running = false, ended = false, paused = false;
+    const STEP_MS = 125;
+
+    maze.forEach(row => row.forEach(cell => {
+        if (cell === "." || cell === "o") pellets++;
+    }));
+
+    function tileAt(x, y) {
+        if (y < 0 || y >= height) return "#";
+        if (y === 10 && (x < 0 || x >= width)) return " ";
+        if (x < 0 || x >= width) return "#";
+        return maze[y][x];
+    }
+    function canMove(x, y, ghost = false) {
+        const cell = tileAt(x, y);
+        if (cell === "#") return false;
+        if (!ghost) {
+            // A collected pellet is replaced with a space in `maze`, but its
+            // original tile was floor. Only spaces that were blank in the
+            // original map are actual walls/void (for example, outside the house).
+            return originalMaze[y]?.[x] !== " " && originalMaze[y]?.[x] !== "=" && cell !== "=";
+        }
+        // Ghosts may use the tunnel and the small ghost-house interior, but
+        // must not wander into the decorative blank space outside the maze.
+        const inTunnel = y === 10 && x >= 0 && x < width;
+        const inGhostHouse = x >= 10 && x <= 12 && y >= 9 && y <= 11;
+        return cell !== " " || inTunnel || inGhostHouse;
+    }
+    function wrapX(x, y) {
+        // The tunnel openings are the blank edge tiles at x=0 and x=22.
+        // Teleport between the first playable tiles on either side instead
+        // of landing on those non-walkable edge tiles.
+        if (y === 10 && x < 1) return width - 2;
+        if (y === 10 && x >= width - 1) return 1;
+        return x;
+    }
+    function same(a, b) { return a.x === b.x && a.y === b.y; }
+    function updateHUD() {
+        scoreEl.textContent = score;
+        livesEl.textContent = lives;
+    }
+
+    function drawMaze() {
+        ctx.fillStyle = "#000";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        // Classic blue maze walls with dark centres and bright blue outlines.
+        for (let y = 0; y < height; y++) {
+            for (let x = 0; x < width; x++) {
+                if (maze[y][x] !== "#") continue;
+                const px = x * TILE, py = y * TILE;
+                ctx.fillStyle = "#07133e";
+                ctx.fillRect(px, py, TILE, TILE);
+                ctx.strokeStyle = "#168cff";
+                ctx.lineWidth = 2;
+                ctx.strokeRect(px + 1, py + 1, TILE - 2, TILE - 2);
+            }
+        }
+
+        // Smooth, rounded joins make the wall blocks read as one continuous maze.
+        ctx.strokeStyle = "#168cff";
+        ctx.lineWidth = 2;
+        ctx.strokeRect(1, 1, canvas.width - 2, canvas.height - 2);
+
+        for (let y = 0; y < height; y++) {
+            for (let x = 0; x < width; x++) {
+                const cell = maze[y][x];
+                const cx = x * TILE + TILE / 2;
+                const cy = y * TILE + TILE / 2;
+                if (cell === ".") {
+                    ctx.fillStyle = "#ffcf9c";
+                    ctx.beginPath();
+                    ctx.arc(cx, cy, 2, 0, Math.PI * 2);
+                    ctx.fill();
+                } else if (cell === "o") {
+                    const r = 4 + Math.sin(performance.now() / 130) * 1.1;
+                    ctx.fillStyle = "#fff1c4";
+                    ctx.beginPath();
+                    ctx.arc(cx, cy, r, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            }
+        }
+
+        // Ghost-house gate.
+        ctx.strokeStyle = "#ff9bd5";
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(10 * TILE + 2, 9 * TILE + TILE / 2);
+        ctx.lineTo(13 * TILE - 2, 9 * TILE + TILE / 2);
+        ctx.stroke();
+    }
+
+    function drawPacman(progress) {
+        const x = (player.fromX + (player.x - player.fromX) * progress) * TILE + TILE / 2;
+        const y = (player.fromY + (player.y - player.fromY) * progress) * TILE + TILE / 2;
+        const direction = player.dir.x || player.dir.y ? player.dir : player.wanted;
+        const angle = Math.atan2(direction.y, direction.x);
+        const mouth = running && !paused ? .12 + .30 * Math.abs(Math.sin(performance.now() / 75)) : .18;
+        ctx.save();
+        ctx.translate(x, y);
+        ctx.rotate(angle);
+        ctx.fillStyle = "#ffe500";
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.arc(0, 0, TILE * .43, mouth, Math.PI * 2 - mouth);
+        ctx.closePath();
+        ctx.fill();
+        ctx.restore();
+    }
+
+    function drawGhost(ghost, progress) {
+        if (ghost.eaten) return;
+        const gx = (ghost.fromX + (ghost.x - ghost.fromX) * progress) * TILE + TILE / 2;
+        const gy = (ghost.fromY + (ghost.y - ghost.fromY) * progress) * TILE + TILE / 2;
+        const frightened = tick < powerUntil && !ghost.eaten;
+        const flash = frightened && powerUntil - tick < 18 && tick % 4 < 2;
+        const color = frightened ? (flash ? "#f5f5ff" : "#1648e8") : ghost.color;
+        const r = TILE * .42;
+        ctx.save();
+        ctx.translate(gx, gy);
+        ctx.fillStyle = color;
+        ctx.beginPath();
+        ctx.arc(0, -1, r, Math.PI, 0);
+        ctx.lineTo(r, r * .95);
+        ctx.lineTo(r * .55, r * .68);
+        ctx.lineTo(r * .18, r * .98);
+        ctx.lineTo(-r * .18, r * .68);
+        ctx.lineTo(-r * .55, r * .98);
+        ctx.lineTo(-r, r * .68);
+        ctx.closePath();
+        ctx.fill();
+
+        if (frightened) {
+            ctx.fillStyle = flash ? "#e33b78" : "#fff";
+            ctx.beginPath();
+            ctx.arc(-4, -1, 1.5, 0, Math.PI * 2);
+            ctx.arc(4, -1, 1.5, 0, Math.PI * 2);
+            ctx.fill();
+        } else {
+            const dx = ghost.dir.x * 1.5, dy = ghost.dir.y * 1.5;
+            for (const ex of [-4, 4]) {
+                ctx.fillStyle = "#fff";
+                ctx.beginPath();
+                ctx.ellipse(ex, -2, 3.4, 4.2, 0, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.fillStyle = "#142b9b";
+                ctx.beginPath();
+                ctx.arc(ex + dx, -2 + dy, 1.7, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+        ctx.restore();
+    }
+
+    function draw(progress = 0) {
+        drawMaze();
+        ghosts.forEach(g => drawGhost(g, progress));
+        drawPacman(progress);
+
+        if (!running || paused || ended) {
+            ctx.fillStyle = "rgba(0,0,0,.72)";
+            ctx.fillRect(3 * TILE, 9 * TILE, 17 * TILE, 4 * TILE);
+            ctx.textAlign = "center";
+            ctx.fillStyle = "#ffe500";
+            ctx.font = "bold 20px monospace";
+            ctx.fillText(ended ? "GAME OVER" : paused ? "PAUSED" : "READY!", canvas.width / 2, 10.7 * TILE);
+            ctx.fillStyle = "#fff";
+            ctx.font = "11px monospace";
+            ctx.fillText(ended ? "Close and reopen to play again" : "Press an arrow key to start", canvas.width / 2, 12 * TILE);
+        }
+    }
+
+    function finish(message) {
+        if (ended) return;
+        ended = true;
+        running = false;
+        if (window.gameIntervals) {
+            clearInterval(window.gameIntervals[winId]);
+            delete window.gameIntervals[winId];
+        }
+        draw(0);
+        showGameOver(winId, `${message} Score: ${score}`, "pacman", "Pac-Man", PACMAN_ICON);
+    }
+
+    function resetAfterHit() {
+        lives--;
+        updateHUD();
+        if (lives <= 0) {
+            finish("The ghosts caught you!");
+            return;
+        }
+        player.x = player.fromX = playerStart.x;
+        player.y = player.fromY = playerStart.y;
+        player.dir = { x: 0, y: 0 };
+        player.wanted = { x: 1, y: 0 };
+        resetGhosts();
+        powerUntil = 0;
+        ghostCombo = 200;
+        accumulator = 0;
+        running = false;
+    }
+
+    function checkCollisions() {
+        for (const ghost of ghosts) {
+            if (ghost.eaten || ghost.releaseAt > tick) continue;
+            if (ghost.x !== player.x || ghost.y !== player.y) continue;
+            if (tick < powerUntil) {
+                ghost.eaten = true;
+                score += ghostCombo;
+                ghostCombo *= 2;
+                updateHUD();
+                // Eaten ghosts return to the house and rejoin after a short delay.
+                setTimeout(() => {
+                    // Ignore stale timers if the player lost a life and the
+                    // ghost array was reset while this ghost was returning.
+                    if (!ended && ghosts.includes(ghost) && document.getElementById(`pacman-canvas-${winId}`)) {
+                        ghost.x = ghost.fromX = ghost.homeX;
+                        ghost.y = ghost.fromY = ghost.homeY;
+                        ghost.dir = { x: 0, y: -1 };
+                        ghost.eaten = false;
+                        ghost.releaseAt = tick + 12;
+                    }
+                }, 900);
+            } else {
+                resetAfterHit();
+                return true;
+            }
+        }
+        return false;
+    }
+
+    function chooseGhostDirection(ghost) {
+        // Build a distance map from Pac-Man. Using maze distances (rather than
+        // straight-line distance) prevents ghosts choosing routes through walls.
+        const targetX = player.x, targetY = player.y;
+        const distances = Array.from({ length: height }, () => Array(width).fill(Infinity));
+        const queue = [{ x: targetX, y: targetY }];
+        if (targetX >= 0 && targetX < width && targetY >= 0 && targetY < height) {
+            distances[targetY][targetX] = 0;
+        }
+        for (let head = 0; head < queue.length; head++) {
+            const point = queue[head];
+            for (const d of dirs) {
+                const nx = wrapX(point.x + d.x, point.y + d.y);
+                const ny = point.y + d.y;
+                if (ny < 0 || ny >= height || nx < 0 || nx >= width) continue;
+                if (!canMove(nx, ny, true) || distances[ny][nx] !== Infinity) continue;
+                distances[ny][nx] = distances[point.y][point.x] + 1;
+                queue.push({ x: nx, y: ny });
+            }
+        }
+
+        const options = dirs.filter(d => {
+            const nx = wrapX(ghost.x + d.x, ghost.y + d.y);
+            const ny = ghost.y + d.y;
+            const occupied = ghosts.some(other =>
+                other !== ghost && !other.eaten && other.x === nx && other.y === ny
+            );
+            return canMove(nx, ny, true) && !occupied;
+        });
+        if (!options.length) return { x: 0, y: 0 };
+
+        // Avoid instant reversals at junctions, except when they are the only
+        // legal route. Stable tie-breaking stops jitter between equal choices.
+        let choices = options.filter(d => !(d.x === -ghost.dir.x && d.y === -ghost.dir.y));
+        if (!choices.length) choices = options;
+        const frightened = tick < powerUntil;
+        choices.sort((a, b) => {
+            const ax = wrapX(ghost.x + a.x, ghost.y + a.y), ay = ghost.y + a.y;
+            const bx = wrapX(ghost.x + b.x, ghost.y + b.y), by = ghost.y + b.y;
+            const da = distances[ay]?.[ax] ?? Infinity;
+            const db = distances[by]?.[bx] ?? Infinity;
+            if (da !== db) return frightened ? db - da : da - db;
+            // Prefer continuing straight when distances are equal.
+            const aStraight = a.x === ghost.dir.x && a.y === ghost.dir.y;
+            const bStraight = b.x === ghost.dir.x && b.y === ghost.dir.y;
+            return Number(bStraight) - Number(aStraight);
+        });
+        return choices[0];
+    }
+
+    function moveGhost(ghost) {
+        if (ghost.eaten || ghost.releaseAt > tick) return;
+        const options = dirs.filter(d => {
+            const nx = wrapX(ghost.x + d.x, ghost.y + d.y);
+            const ny = ghost.y + d.y;
+            const occupied = ghosts.some(other =>
+                other !== ghost && !other.eaten && other.x === nx && other.y === ny
+            );
+            return canMove(nx, ny, true) && !occupied;
+        });
+        if (!options.length) {
+            ghost.dir = { x: 0, y: 0 };
+            ghost.fromX = ghost.x;
+            ghost.fromY = ghost.y;
+            return;
+        }
+        const forwardOpen = options.some(d => d.x === ghost.dir.x && d.y === ghost.dir.y);
+        const atJunction = options.length > 2;
+        if (!forwardOpen || atJunction || (!ghost.dir.x && !ghost.dir.y)) {
+            ghost.dir = chooseGhostDirection(ghost);
+        }
+        const nx = wrapX(ghost.x + ghost.dir.x, ghost.y + ghost.dir.y);
+        const ny = ghost.y + ghost.dir.y;
+        // Final safety check: never advance into a wall if a route changed.
+        if (canMove(nx, ny, true)) {
+            ghost.fromX = ghost.x;
+            ghost.fromY = ghost.y;
+            ghost.x = nx;
+            ghost.y = ny;
+        } else {
+            ghost.fromX = ghost.x;
+            ghost.fromY = ghost.y;
+            ghost.dir = chooseGhostDirection(ghost);
+        }
+    }
+
+    function movePlayer() {
+        tick++;
+        const turnX = wrapX(player.x + player.wanted.x, player.y + player.wanted.y);
+        if (canMove(turnX, player.y + player.wanted.y)) {
+            player.dir = { ...player.wanted };
+        }
+        player.fromX = player.x;
+        player.fromY = player.y;
+
+        const nextX = wrapX(player.x + player.dir.x, player.y + player.dir.y);
+        const nextY = player.y + player.dir.y;
+        if (player.dir.x || player.dir.y) {
+            if (canMove(nextX, nextY)) {
+                player.x = nextX;
+                player.y = nextY;
+                // A tunnel crossing is a teleport, not a long animation
+                // across the entire maze.
+                if (Math.abs(player.x - player.fromX) > width / 2) {
+                    player.fromX = player.x;
+                }
+            } else {
+                // Stop cleanly at a wall but keep the buffered direction, so
+                // Pac-Man can start moving as soon as that turn becomes legal.
+                player.dir = { x: 0, y: 0 };
+            }
+        }
+
+        const cell = maze[player.y][player.x];
+        if (cell === "." || cell === "o") {
+            maze[player.y][player.x] = " ";
+            pellets--;
+            score += cell === "o" ? 50 : 10;
+            if (cell === "o") {
+                powerUntil = tick + 65;
+                ghostCombo = 200;
+            }
+            updateHUD();
+        }
+
+        if (checkCollisions()) return;
+        if (pellets <= 0) {
+            finish("Maze cleared!");
+            return;
+        }
+
+        // Ghosts move slightly slower than Pac-Man.
+        if (tick % 2 === 0) {
+            ghosts.forEach(moveGhost);
+            checkCollisions();
+        }
+    }
+
+    const keyDirections = {
+        ArrowLeft: { x: -1, y: 0 }, a: { x: -1, y: 0 },
+        ArrowRight: { x: 1, y: 0 }, d: { x: 1, y: 0 },
+        ArrowUp: { x: 0, y: -1 }, w: { x: 0, y: -1 },
+        ArrowDown: { x: 0, y: 1 }, s: { x: 0, y: 1 }
+    };
+    box.addEventListener("keydown", event => {
+        const key = event.key.length === 1 ? event.key.toLowerCase() : event.key;
+        const direction = keyDirections[key];
+        if (direction) {
+            event.preventDefault();
+            player.wanted = direction;
+            if (!ended) {
+                running = true;
+                paused = false;
+            }
+        } else if (key === " " || key === "Escape") {
+            event.preventDefault();
+            if (!ended && running) paused = !paused;
+        }
+    });
+
+    // Keep the game paused when its window is minimized or hidden.
+    const step = () => {
+        if (ended) return;
+        const now = performance.now();
+        const elapsed = Math.min(now - lastTime, 50);
+        lastTime = now;
+        if (running && !paused && document.getElementById(winId)?.style.display !== "none") {
+            accumulator += elapsed;
+            while (accumulator >= STEP_MS && running && !paused && !ended) {
+                accumulator -= STEP_MS;
+                movePlayer();
+            }
+        }
+        draw(running && !paused ? Math.min(1, accumulator / STEP_MS) : 0);
+    };
+
+    updateHUD();
+    draw(0);
+    box.focus();
+    window.gameIntervals ||= {};
+    window.gameIntervals[winId] = setInterval(step, 16);
+}
 
 </script>
 

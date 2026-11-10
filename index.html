@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<link rel="icon" type="image/png" href="SHNAIL-OS-LOGO.png">
+<link rel="icon" type="image/png" href="https://shnail-boy.github.io/SHNAIL-OS/SHNAIL-OS-LOGO.png">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>SHNAIL-OS</title>
@@ -989,7 +989,6 @@ body {
             <li onclick="openWindow('gamesFolder', 'Games Arcade', '🎮'); toggleStartMenu()">🎮 Games</li>
             <li onclick="openWindow('notepad', 'Notepad', '📝'); toggleStartMenu()">📝 Notepad</li>
             <li onclick="openWindow('paint', 'Paint Brush', '🎨'); toggleStartMenu()">🎨 Paint</li>
-            <li onclick="openWindow('calc', 'Calculator', '🧮'); toggleStartMenu()">🧮 Calculator</li>
             <li onclick="openWindow('settings', 'Settings', '⚙️'); toggleStartMenu()">⚙️ Settings</li>
             <li onclick="openWindow('explorer','File Explorer','📁'); toggleStartMenu()">📁 File Explorer</li>
             <li onclick="openWindow('recycle','Recycle Bin','🗑️'); toggleStartMenu()">🗑️ Recycle Bin</li>
@@ -999,8 +998,11 @@ body {
                     <span>Utilities</span><span aria-hidden="true">▶</span>
                 </div>
                 <ul id="utilitiesMenu" class="utilities-submenu">
+                    <li onclick="openWindow('calc', 'Calculator', '🧮'); toggleStartMenu()">🧮 Calculator</li>
                     <li onclick="openWindow('music','Music Player','🎵'); toggleStartMenu()">🎵 Music Player</li>
                     <li onclick="openWindow('stopwatch','Stopwatch','⏱️'); toggleStartMenu()">⏱️ Stopwatch</li>
+                    <li onclick="openWindow('timer','Countdown Timer','⏲️'); toggleStartMenu()">⏲️ Countdown Timer</li>
+                    <li onclick="openWindow('colorPicker','Color Picker','🎨'); toggleStartMenu()">🎨 Color Picker</li>
                     <li onclick="openWindow('stickyNotes','Sticky Notes','🗒️'); toggleStartMenu()">🗒️ Sticky Notes</li>
                     <li onclick="openWindow('imageViewer','Image Viewer','🖼️'); toggleStartMenu()">🖼️ Image Viewer</li>
                     <li onclick="openWindow('systemInfo','System Information','ℹ️'); toggleStartMenu()">ℹ️ System Information</li>
@@ -1411,6 +1413,7 @@ function closeWindow(winId) {
         delete window.imageViewerUrls[winId];
     }
     if (window.stopwatchStates) delete window.stopwatchStates[winId];
+    if (window.timerStates) delete window.timerStates[winId];
     (musicPlaylists[winId] || []).forEach(track => URL.revokeObjectURL(track.url));
     delete musicPlaylists[winId];
     const win = document.getElementById(winId);
@@ -1924,11 +1927,31 @@ function openWindow(idPrefix, title, icon, options = {}) {
     } else if (idPrefix === 'stopwatch') {
         contentHTML = `
             <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;height:100%;background:#e8e8e8;">
-                <output id="stopwatch-display-${winId}" style="font: bold 38px monospace;">00:00.0</output>
+                <output id="stopwatch-display-${winId}" style="font: bold 38px monospace;">00:00.00</output>
                 <div style="display:flex;gap:8px;">
                     <button onclick="toggleStopwatch('${winId}')">Start</button>
                     <button onclick="resetStopwatch('${winId}')">Reset</button>
                 </div>
+            </div>
+        `;
+    } else if (idPrefix === 'timer') {
+        contentHTML = `
+            <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;height:100%;background:#e8e8e8;">
+                <label>Countdown (seconds): <input id="timer-input-${winId}" type="number" min="1" value="60" style="width:70px;"></label>
+                <output id="timer-display-${winId}" style="font:bold 36px monospace;">01:00</output>
+                <div style="display:flex;gap:8px;">
+                    <button onclick="toggleTimer('${winId}')">Start</button>
+                    <button onclick="resetTimer('${winId}')">Reset</button>
+                </div>
+            </div>
+        `;
+    } else if (idPrefix === 'colorPicker') {
+        contentHTML = `
+            <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;height:100%;">
+                <label>Choose a color: <input id="color-picker-${winId}" type="color" value="#008080" oninput="updateColorPicker('${winId}',this.value)"></label>
+                <div id="color-swatch-${winId}" style="width:100px;height:70px;background:#008080;border:2px inset #aaa;"></div>
+                <output id="color-value-${winId}" style="font:bold 20px monospace;">#008080</output>
+                <button onclick="copyColorValue('${winId}')">Copy color code</button>
             </div>
         `;
     } else if (idPrefix === 'stickyNotes') {
@@ -2197,7 +2220,7 @@ function openWindow(idPrefix, title, icon, options = {}) {
     } else if (idPrefix === 'pacman') {
         contentHTML = `
             <div class="game-container" id="pacman-box-${winId}" tabindex="0" onclick="this.focus()" style="gap:6px;padding:8px;">
-                <div style="font-size:12px;">PAC-MAN &nbsp; Score: <span id="pacman-score-${winId}">0</span> &nbsp; Lives: <span id="pacman-lives-${winId}">3</span></div>
+                <div style="font-size:12px;">PAC-MAN &nbsp; Level: <span id="pacman-level-${winId}">1</span>/5 &nbsp; Score: <span id="pacman-score-${winId}">0</span> &nbsp; Lives: <span id="pacman-lives-${winId}">3</span></div>
                 <canvas id="pacman-canvas-${winId}" width="414" height="396" style="display:block;width:min(100%,414px);height:auto;image-rendering:pixelated;border:2px solid #174bff;background:#000;"></canvas>
                 <div style="font-size:10px;color:#aaa;">ARROWS / WASD to move • SPACE to pause • Eat big dots to scare ghosts</div>
             </div>
@@ -2301,6 +2324,8 @@ function openWindow(idPrefix, title, icon, options = {}) {
         renderRecycleBin(winId);
     } else if (idPrefix === 'stopwatch') {
         initStopwatch(winId);
+    } else if (idPrefix === 'timer') {
+        initTimer(winId);
     } else if (idPrefix === 'stickyNotes') {
         document.getElementById(`sticky-note-${winId}`).value = localStorage.getItem("shnail_sticky_note") || "";
     }
@@ -2472,10 +2497,11 @@ function initStopwatch(winId) {
 }
 
 function formatStopwatch(milliseconds) {
-    const tenths = Math.floor(milliseconds / 100);
-    const minutes = Math.floor(tenths / 600);
-    const seconds = Math.floor(tenths / 10) % 60;
-    return `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}.${tenths % 10}`;
+    const hundredths = Math.floor(milliseconds / 10);
+    const minutes = Math.floor(hundredths / 6000);
+    const seconds = Math.floor(hundredths / 100) % 60;
+    const fraction = hundredths % 100;
+    return `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}.${String(fraction).padStart(2, "0")}`;
 }
 
 function updateStopwatch(winId) {
@@ -2499,7 +2525,7 @@ function toggleStopwatch(winId) {
     } else {
         state.startedAt = Date.now();
         state.running = true;
-        window.gameIntervals[winId] = setInterval(() => updateStopwatch(winId), 100);
+        window.gameIntervals[winId] = setInterval(() => updateStopwatch(winId), 10);
     }
     updateStopwatch(winId);
 }
@@ -2510,6 +2536,89 @@ function resetStopwatch(winId) {
     state.elapsed = 0;
     state.startedAt = state.running ? Date.now() : 0;
     updateStopwatch(winId);
+}
+
+window.timerStates = {};
+
+function formatTimer(seconds) {
+    const minutes = Math.floor(seconds / 60);
+    const remainder = seconds % 60;
+    return `${String(minutes).padStart(2, "0")}:${String(remainder).padStart(2, "0")}`;
+}
+
+function initTimer(winId) {
+    const input = document.getElementById(`timer-input-${winId}`);
+    const display = document.getElementById(`timer-display-${winId}`);
+    if (!input || !display) return;
+    window.timerStates[winId] = { remaining: Number(input.value) || 60, running: false };
+    display.textContent = formatTimer(window.timerStates[winId].remaining);
+}
+
+function toggleTimer(winId) {
+    const state = window.timerStates[winId];
+    const input = document.getElementById(`timer-input-${winId}`);
+    const display = document.getElementById(`timer-display-${winId}`);
+    if (!state || !input || !display) return;
+    const button = display.parentElement.querySelector("button");
+    if (state.running) {
+        clearInterval(window.gameIntervals[winId]);
+        delete window.gameIntervals[winId];
+        state.running = false;
+        button.textContent = "Start";
+        input.disabled = false;
+        return;
+    }
+    if (state.remaining <= 0) state.remaining = Math.max(1, Math.floor(Number(input.value) || 60));
+    display.textContent = formatTimer(state.remaining);
+    state.running = true;
+    input.disabled = true;
+    button.textContent = "Pause";
+    window.gameIntervals[winId] = setInterval(() => {
+        state.remaining = Math.max(0, state.remaining - 1);
+        display.textContent = formatTimer(state.remaining);
+        if (state.remaining === 0) {
+            clearInterval(window.gameIntervals[winId]);
+            delete window.gameIntervals[winId];
+            state.running = false;
+            input.disabled = false;
+            button.textContent = "Start";
+            display.textContent = "Time's up!";
+        }
+    }, 1000);
+}
+
+function resetTimer(winId) {
+    const state = window.timerStates[winId];
+    const input = document.getElementById(`timer-input-${winId}`);
+    const display = document.getElementById(`timer-display-${winId}`);
+    if (!state || !input || !display) return;
+    clearInterval(window.gameIntervals[winId]);
+    delete window.gameIntervals[winId];
+    state.remaining = Math.max(1, Math.floor(Number(input.value) || 60));
+    state.running = false;
+    input.disabled = false;
+    display.textContent = formatTimer(state.remaining);
+    display.parentElement.querySelector("button").textContent = "Start";
+}
+
+function updateColorPicker(winId, color) {
+    const swatch = document.getElementById(`color-swatch-${winId}`);
+    const value = document.getElementById(`color-value-${winId}`);
+    if (swatch) swatch.style.background = color;
+    if (value) value.textContent = color.toUpperCase();
+}
+
+function copyColorValue(winId) {
+    const value = document.getElementById(`color-value-${winId}`);
+    if (!value) return;
+    const helper = document.createElement("textarea");
+    helper.value = value.textContent;
+    helper.style.position = "fixed";
+    helper.style.opacity = "0";
+    document.body.appendChild(helper);
+    helper.select();
+    document.execCommand("copy");
+    helper.remove();
 }
 
 function saveStickyNote(textarea) {
@@ -2680,8 +2789,8 @@ function initPacmanGame(winId) {
         "#...#...#...#.#",
         "###.###d##.####",
         "#....#hhh#....#",
-        "#.#.#####.#.#.#",
-        "#.#...#...#...#",
+        "#.#.#.###.#.#.#",
+        "#.#....#....#.#",
         "#.###.#.#.###.#",
         "#.............#",
         "#.###.###.###.#",
@@ -3572,6 +3681,10 @@ function openDesktopApp(appKey) {
 }
 
 document.addEventListener("contextmenu", e => {
+    if (e.target.closest("#loginScreen")) {
+        e.preventDefault();
+        return;
+    }
     const desktopApp = e.target.closest(".icon");
     const desktopFolder = e.target.closest(".desktop-folder");
     const folderApp = e.target.closest(".desktop-folder-app");
@@ -4291,37 +4404,42 @@ function initPacmanGame(winId) {
     const box = document.getElementById(`pacman-box-${winId}`);
     const scoreEl = document.getElementById(`pacman-score-${winId}`);
     const livesEl = document.getElementById(`pacman-lives-${winId}`);
-    if (!canvas || !box || !scoreEl || !livesEl) return;
+    const levelEl = document.getElementById(`pacman-level-${winId}`);
+    if (!canvas || !box || !scoreEl || !livesEl || !levelEl) return;
 
     const ctx = canvas.getContext("2d");
     const TILE = 18;
     const rawMaze = [
         "#######################",
-        "#o........#..........o#",
-        "#.###.###.#.###.###.#.#",
-        "#.###.###.#.###.###.#.#",
+        "#o.........#.........o#",
+        "#.###.###..####.###.#.#",
+        "#.###.###..####.###.#.#",
         "#.....................#",
         "#.###.#.#######.#.###.#",
         "#.....#...###...#.....#",
         "#####.###.###.###.#####",
         "    #.#...###...#.#    ",
-         "#####.#.##   ##.#.#####",
+        "#####.#.##   ##.#.#####",
         " ..................... ",
         "#####.#.##   ##.#.#####",
         "    #.#...###...#.#    ",
         "#####.#.#######.#.#####",
-        "#.........#...........#",
+        "#...........#.........#",
         "#.###.###.#.#.###.###.#",
-        "#o..#.....#.....#....o#",
+        "#o....#.....#.....#...o#",
         "###.#.#.#####.#.#.###.#",
-        "#...#.#...#...#.#.....#",
+        "#.....#.#...#...#.#...#",
         "#.###.###.#.###.###.#.#",
         "#.....................#",
         "#######################"
     ];
     // Keep every row the same width; the side openings on the tunnel row wrap around.
     const width = 23, height = rawMaze.length;
-    const maze = rawMaze.map(row => row.padEnd(width, "#").slice(0, width).split(""));
+    const maze = rawMaze.map(row => {
+        const leftHalf = row.slice(0, Math.floor(width / 2));
+        const center = row[Math.floor(width / 2)];
+        return (leftHalf + center + [...leftHalf].reverse().join("")).split("");
+    });
     const originalMaze = maze.map(row => row.slice());
     canvas.width = width * TILE;
     canvas.height = height * TILE;
@@ -4354,11 +4472,13 @@ function initPacmanGame(winId) {
     }
     resetGhosts();
 
-    let score = 0, lives = 3, pellets = 0, tick = 0;
+    let score = 0, lives = 3, pellets = 0, tick = 0, level = 1;
     let powerUntil = 0, ghostCombo = 200;
-    let accumulator = 0, lastTime = performance.now();
+    let accumulator = 0, ghostClock = 0, lastTime = performance.now();
     let running = false, ended = false, paused = false;
     const STEP_MS = 125;
+    const ghostMoveIntervals = [2, 1.75, 1.5, 1.25, 1];
+    const ghostMoveInterval = () => ghostMoveIntervals[level - 1];
 
     maze.forEach(row => row.forEach(cell => {
         if (cell === "." || cell === "o") pellets++;
@@ -4397,6 +4517,32 @@ function initPacmanGame(winId) {
     function updateHUD() {
         scoreEl.textContent = score;
         livesEl.textContent = lives;
+        levelEl.textContent = level;
+    }
+
+    function startNextLevel() {
+        if (level >= 5) {
+            finish("You completed all 5 levels!");
+            return;
+        }
+        level++;
+        maze.forEach((row, y) => { maze[y] = originalMaze[y].slice(); });
+        pellets = 0;
+        maze.forEach(row => row.forEach(cell => { if (cell === "." || cell === "o") pellets++; }));
+        tick = 0;
+        player.x = player.fromX = playerStart.x;
+        player.y = player.fromY = playerStart.y;
+        player.dir = { x: 0, y: 0 };
+        player.wanted = { x: 1, y: 0 };
+        resetGhosts();
+        powerUntil = 0;
+        ghostCombo = 200;
+        ghostClock = 0;
+        accumulator = 0;
+        running = false;
+        paused = false;
+        updateHUD();
+        draw(0);
     }
 
     function drawMaze() {
@@ -4514,7 +4660,8 @@ function initPacmanGame(winId) {
 
     function draw(progress = 0) {
         drawMaze();
-        ghosts.forEach(g => drawGhost(g, progress));
+        const ghostProgress = Math.min(1, (ghostClock + accumulator / STEP_MS) / ghostMoveInterval());
+        ghosts.forEach(g => drawGhost(g, ghostProgress));
         drawPacman(progress);
 
         if (!running || paused || ended) {
@@ -4716,12 +4863,14 @@ function initPacmanGame(winId) {
 
         if (checkCollisions()) return;
         if (pellets <= 0) {
-            finish("Maze cleared!");
+            startNextLevel();
             return;
         }
 
-        // Ghosts move slightly slower than Pac-Man.
-        if (tick % 2 === 0) {
+        // Ghosts move more often on each successive level.
+        ghostClock += 1;
+        if (ghostClock >= ghostMoveInterval()) {
+            ghostClock -= ghostMoveInterval();
             ghosts.forEach(moveGhost);
             checkCollisions();
         }

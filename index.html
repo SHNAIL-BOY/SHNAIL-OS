@@ -483,6 +483,94 @@ body {
     margin:2px 0;
 }
 
+#snailControlMenu {
+    position: fixed;
+    right: 15px;
+    bottom: 15px;
+    width: 245px;
+    padding: 3px;
+    color: #000;
+    background: #c0c0c0;
+    border-top: 2px solid #fff;
+    border-left: 2px solid #fff;
+    border-right: 2px solid #404040;
+    border-bottom: 2px solid #404040;
+    box-shadow: 3px 3px 8px rgba(0,0,0,.45);
+    z-index: 1000000;
+    font: 12px Tahoma, sans-serif;
+}
+
+#snailControlHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 4px 6px;
+    color: white;
+    background: linear-gradient(90deg, #000080, #1084d0);
+    font-weight: bold;
+    cursor: move;
+}
+
+#snailControlHeader button,
+#snailControlMenu button {
+    cursor: pointer;
+}
+
+#snailControlHeader button {
+    width: 18px;
+    height: 18px;
+    font-weight: bold;
+}
+
+#snailControlBody {
+    display: grid;
+    gap: 7px;
+    padding: 9px 7px 6px;
+}
+
+#snailControlBody label {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 6px;
+}
+
+#snailControlBody select,
+#snailControlBody input[type="text"] {
+    min-width: 0;
+    max-width: 145px;
+}
+
+#snailControlBody input[type="range"] {
+    width: 90px;
+}
+
+#snailControlBody input[type="text"] {
+    padding: 3px;
+    user-select: text;
+}
+
+#snailCursorSprite {
+    position: fixed;
+    left: 10px;
+    top: 10px;
+    z-index: 999998;
+    pointer-events: none;
+    user-select: none;
+    font-size: 32px;
+}
+
+.snail-trail-drop {
+    position: fixed;
+    width: 8px;
+    height: 6px;
+    border-radius: 50%;
+    background: rgba(0, 128, 128, .45);
+    pointer-events: none;
+    z-index: 999997;
+    transition: opacity 1.5s ease-out, transform 1.5s ease-out;
+}
+
 #osDialogOverlay {
     position: fixed;
     inset: 0;
@@ -4023,6 +4111,230 @@ function initTetrisGame(winId) {
     window.gameIntervals[winId] = timer;
 }
 
+// Cursor-following Shnail, launched from the Terminal command.
+let cursorSnailController;
+
+function enableCursorSnail() {
+    if (!cursorSnailController) {
+        const presets = {
+            "Default Shnail": { src: "🐌", inverted: false },
+            "Twitter Shnail": { src: "https://shnail-boy.github.io/SHNAIL-OS/twitter-shnail.png", inverted: false },
+            "Pixel Shnail": { src: "https://shnail-boy.github.io/SHNAIL-OS/pixel-shnail.png", inverted: true },
+            "Me": { src: "https://shnail-boy.github.io/SHNAIL-OS/shnailboy.png", inverted: false }
+        };
+        const getStored = (key, fallback) => {
+            try {
+                const value = localStorage.getItem(key);
+                return value === null ? fallback : value;
+            } catch {
+                return fallback;
+            }
+        };
+        const setStored = (key, value) => {
+            try { localStorage.setItem(key, String(value)); } catch {}
+        };
+        const parseBoolean = (value, fallback) => value === null ? fallback : value === true || value === "true";
+        const getPosition = () => {
+            try {
+                const saved = JSON.parse(getStored("shnail_menu_pos", "null"));
+                return saved && typeof saved === "object"
+                    ? saved
+                    : { bottom: "15px", right: "15px", left: "auto", top: "auto" };
+            } catch {
+                return { bottom: "15px", right: "15px", left: "auto", top: "auto" };
+            }
+        };
+
+        let enabled = parseBoolean(getStored("shnail_enabled", null), true);
+        let selectedPreset = getStored("shnail_preset", "Default Shnail");
+        if (!presets[selectedPreset]) selectedPreset = "Default Shnail";
+        let customUrl = getStored("shnail_custom_url", "");
+        let speed = Number(getStored("shnail_speed", "0.03"));
+        if (!Number.isFinite(speed)) speed = 0.03;
+        let inverted = parseBoolean(getStored("shnail_inverted", null), presets[selectedPreset].inverted);
+        let minimized = parseBoolean(getStored("shnail_minimized", null), false);
+        const position = getPosition();
+        const sprite = document.createElement("div");
+        sprite.id = "snailCursorSprite";
+        sprite.setAttribute("aria-hidden", "true");
+        const menu = document.createElement("section");
+        menu.id = "snailControlMenu";
+        menu.setAttribute("aria-label", "Shnail cursor controls");
+        menu.style.bottom = position.bottom || "15px";
+        menu.style.right = position.right || "15px";
+        menu.style.left = position.left || "auto";
+        menu.style.top = position.top || "auto";
+        menu.innerHTML = `
+            <div id="snailControlHeader">
+                <span>🐌 Shnail Controls</span>
+                <button type="button" id="snailMinimize" aria-label="Minimize controls"></button>
+            </div>
+            <div id="snailControlBody">
+                <label>Enable Shnail <input type="checkbox" id="snailEnabled"></label>
+                <label>Preset <select id="snailPreset"></select></label>
+                <label>Custom URL <input type="text" id="snailCustomUrl" placeholder="https://..."></label>
+                <label>Invert flip <input type="checkbox" id="snailInverted"></label>
+                <label>Speed <input type="range" id="snailSpeed" min="0.01" max="0.1" step="0.01"></label>
+            </div>`;
+        document.body.append(sprite, menu);
+
+        const body = menu.querySelector("#snailControlBody");
+        const minimizeButton = menu.querySelector("#snailMinimize");
+        const enabledInput = menu.querySelector("#snailEnabled");
+        const presetInput = menu.querySelector("#snailPreset");
+        const urlInput = menu.querySelector("#snailCustomUrl");
+        const invertedInput = menu.querySelector("#snailInverted");
+        const speedInput = menu.querySelector("#snailSpeed");
+        const header = menu.querySelector("#snailControlHeader");
+
+        Object.keys(presets).forEach(name => {
+            const option = document.createElement("option");
+            option.value = name;
+            option.textContent = name;
+            presetInput.appendChild(option);
+        });
+        presetInput.value = selectedPreset;
+        urlInput.value = customUrl;
+        enabledInput.checked = enabled;
+        invertedInput.checked = inverted;
+        speedInput.value = String(Math.max(0.01, Math.min(0.1, speed)));
+
+        let mouseX = 10, mouseY = 10, snailX = 10, snailY = 10;
+        let lastTrailX = 10, lastTrailY = 10;
+        const render = () => {
+            sprite.style.display = enabled ? "block" : "none";
+            if (!enabled) return;
+            const source = customUrl.trim() || presets[selectedPreset].src;
+            if (/^https?:\/\//i.test(source)) {
+                const image = document.createElement("img");
+                image.src = source;
+                image.alt = "Shnail";
+                image.style.cssText = "width:36px;height:36px;display:block;object-fit:contain;";
+                sprite.replaceChildren(image);
+            } else {
+                sprite.textContent = source;
+            }
+        };
+        const savePosition = () => {
+            setStored("shnail_menu_pos", JSON.stringify({
+                left: menu.style.left, top: menu.style.top,
+                bottom: menu.style.bottom, right: menu.style.right
+            }));
+        };
+        const addTrail = (x, y) => {
+            const drop = document.createElement("div");
+            drop.className = "snail-trail-drop";
+            drop.style.left = `${x + 12}px`;
+            drop.style.top = `${y + 20}px`;
+            document.body.appendChild(drop);
+            requestAnimationFrame(() => {
+                drop.style.opacity = "0";
+                drop.style.transform = "scale(.5)";
+            });
+            setTimeout(() => drop.remove(), 1500);
+        };
+
+        minimizeButton.textContent = minimized ? "+" : "–";
+        body.style.display = minimized ? "none" : "grid";
+        minimizeButton.addEventListener("click", () => {
+            minimized = !minimized;
+            body.style.display = minimized ? "none" : "grid";
+            minimizeButton.textContent = minimized ? "+" : "–";
+            setStored("shnail_minimized", minimized);
+        });
+        enabledInput.addEventListener("change", () => {
+            enabled = enabledInput.checked;
+            setStored("shnail_enabled", enabled);
+            render();
+        });
+        presetInput.addEventListener("change", () => {
+            selectedPreset = presetInput.value;
+            customUrl = "";
+            urlInput.value = "";
+            inverted = presets[selectedPreset].inverted;
+            invertedInput.checked = inverted;
+            setStored("shnail_preset", selectedPreset);
+            setStored("shnail_custom_url", "");
+            setStored("shnail_inverted", inverted);
+            render();
+        });
+        urlInput.addEventListener("input", () => {
+            customUrl = urlInput.value.trim();
+            setStored("shnail_custom_url", customUrl);
+            render();
+        });
+        invertedInput.addEventListener("change", () => {
+            inverted = invertedInput.checked;
+            setStored("shnail_inverted", inverted);
+        });
+        speedInput.addEventListener("input", () => {
+            speed = Number(speedInput.value);
+            setStored("shnail_speed", speed);
+        });
+
+        let dragging = false, startX = 0, startY = 0, initialLeft = 0, initialTop = 0;
+        header.addEventListener("mousedown", event => {
+            if (event.target === minimizeButton) return;
+            dragging = true;
+            startX = event.clientX;
+            startY = event.clientY;
+            const rect = menu.getBoundingClientRect();
+            initialLeft = rect.left;
+            initialTop = rect.top;
+            menu.style.cssText += `;left:${initialLeft}px;top:${initialTop}px;right:auto;bottom:auto`;
+        });
+        window.addEventListener("mousemove", event => {
+            mouseX = event.clientX - 16;
+            mouseY = event.clientY - 16;
+            if (dragging) {
+                menu.style.left = `${Math.max(0, Math.min(window.innerWidth - menu.offsetWidth, initialLeft + event.clientX - startX))}px`;
+                menu.style.top = `${Math.max(0, Math.min(window.innerHeight - menu.offsetHeight, initialTop + event.clientY - startY))}px`;
+            }
+        });
+        window.addEventListener("mouseup", () => {
+            if (!dragging) return;
+            dragging = false;
+            savePosition();
+        });
+        window.addEventListener("resize", () => {
+            if (menu.style.left !== "" && menu.style.left !== "auto") {
+                menu.style.left = `${Math.max(0, Math.min(window.innerWidth - menu.offsetWidth, menu.offsetLeft))}px`;
+                menu.style.top = `${Math.max(0, Math.min(window.innerHeight - menu.offsetHeight, menu.offsetTop))}px`;
+                savePosition();
+            }
+        });
+
+        const animate = () => {
+            if (enabled) {
+                const dx = mouseX - snailX;
+                const dy = mouseY - snailY;
+                snailX += dx * speed;
+                snailY += dy * speed;
+                if (Math.hypot(snailX - lastTrailX, snailY - lastTrailY) > 12) {
+                    addTrail(snailX, snailY);
+                    lastTrailX = snailX;
+                    lastTrailY = snailY;
+                }
+                let flip = dx < 0 ? 1 : -1;
+                if (inverted) flip *= -1;
+                sprite.style.left = `${snailX}px`;
+                sprite.style.top = `${snailY}px`;
+                sprite.style.transform = `scaleX(${flip})`;
+            }
+            requestAnimationFrame(animate);
+        };
+        render();
+        requestAnimationFrame(animate);
+        cursorSnailController = { enable: () => {
+            enabled = true;
+            enabledInput.checked = true;
+            setStored("shnail_enabled", true);
+            render();
+        }};
+    }
+    cursorSnailController.enable();
+}
+
 //===== TERMINAL LOGIC =====
 
 function runTerminalCommand(event, winId) {
@@ -4056,10 +4368,13 @@ function runTerminalCommand(event, winId) {
 
     let response = '';
 
-    if (command === 'clear') {
+    if (command === 'shnail follow cursor') {
+        enableCursorSnail();
+        response = 'Cursor-following Shnail enabled. Use the control panel to customize it.';
+    } else if (command === 'clear') {
         output.innerHTML = '';
     } else if (command === 'help') {
-        response = 'Commands: help, about, date, clear, open [app], games, shnailwashere, tetris, info';
+        response = 'Starter Commands: about, date, clear, open [app], shnailwashere, tetris, info, shnail follow cursor';
     } else if (command.startsWith('open ')) {
         const appName = command.slice(5).trim();
         const app = apps[appName];
@@ -4074,20 +4389,15 @@ function runTerminalCommand(event, winId) {
         response = 'SHNAIL-OS — an OS recreation by SHNAIL.';
     } else if (command === 'date') {
         response = new Date().toString();
-    } else if (command === 'games') {
-        response = 'Games: Snake, Tic-Tac-Toe, Minesweeper, Pong, Tetris, Breakout, and Space Invaders.';
     } else if (command === 'tetris') {
         openWindow('tetris', 'Tetris', '🧱');
         response = 'Launching Tetris...';
-    } else if (command === 'pong') {
-        openWindow('pong', 'Pong', '🏓');
-        response = 'Launching Pong...';
-    } else if (command === 'calendar' || command === 'info') {
-        const app = apps[command];
-        openWindow(app[0], app[1], app[2]);
-        response = `Opening ${app[1]}...`;
     } else if (command === 'shnailwashere') {
         response = 'yes he was.';
+    } else if (command === 'matrix') {
+        response = 'wake up...';
+    } else if (command === '42') {
+        response = 'The answer to life, the universe, and everything';
     } else {
         response = 'Command not found.';
     }
